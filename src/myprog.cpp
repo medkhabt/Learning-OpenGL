@@ -87,9 +87,13 @@ int main() {
 
     // vertex input 
     float vertices[] = {
-        -0.5f, -0.5f, 0.0f, 
         0.5f, -0.5f, 0.0f, 
-        0.0f, 0.5, 0.0f 
+        0.5f, 0.5f, 0.0f, 
+        -0.5f, -0.5, 0.0f, 
+        -0.5f, -0.5f, 0.0f, 
+        -0.5f, 0.5f, 0.0f, 
+        0.5f, 0.5, 0.0f, 
+        
     };
 
     unsigned int VBO, VAO; 
@@ -115,6 +119,7 @@ int main() {
 
         glUseProgram(shaderProgram); 
         glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 3, 3);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glfwSwapBuffers(window);  
