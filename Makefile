@@ -28,3 +28,4 @@ run : myprog
 
 clean: 
 	rm myprog
+	rm *.o
