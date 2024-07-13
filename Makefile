@@ -13,7 +13,7 @@ LIBS=-lglfw -framework Cocoa -framework OpenGL -framework IOKit
 
 default: all 
 
-all: myprog 
+all: run 
 
 glad.o : $(C_SRC)
 	clang $(CFLAGS) $(INC) -c $< -o $@
@@ -22,6 +22,9 @@ myprog.o : $(CPP_SRC)
 
 myprog: glad.o myprog.o 
 	clang++ $(CPPFLAGS) -o myprog glad.o myprog.o $(LIBS) 
+
+run : myprog
+	./myprog
 
 clean: 
 	rm myprog
