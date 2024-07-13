@@ -18,6 +18,10 @@ const char *fragmentShaderSource = "#version 330 core\n"
 
 void processInput(GLFWwindow *window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height); 
+unsigned int  basicVertexShader();
+unsigned int basicFragmentShader();
+unsigned int drawRectangle(); 
+unsigned int drawTriangle(int position);
 
 int main() {
     glfwInit(); 
@@ -42,6 +46,66 @@ int main() {
 
 
      // Vertex shader
+     unsigned int vertexShader = basicVertexShader(); 
+     // Fragment shader 
+     unsigned int fragmentShader =  basicFragmentShader();
+     // shader program 
+     unsigned int shaderProgram = glCreateProgram(); 
+     glAttachShader(shaderProgram, vertexShader); 
+     glAttachShader(shaderProgram, fragmentShader); 
+     glLinkProgram(shaderProgram);
+
+     int success; 
+     char infoLog[512]; 
+     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success); 
+     if(!success){
+        glGetShaderInfoLog(shaderProgram, 512, NULL, infoLog);  
+        std::cout << "ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n" << infoLog << std::endl; 
+     }
+     glDeleteShader(vertexShader); 
+     glDeleteShader(fragmentShader);
+
+
+    // vertex input 
+    unsigned int VAORectangle = drawRectangle();  
+    unsigned int VAOTriangle = drawTriangle(0); 
+// RENDER
+    while(!glfwWindowShouldClose(window)){
+        
+        processInput(window); 
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glUseProgram(shaderProgram); 
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glBindVertexArray(VAORectangle);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(VAOTriangle);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glBindVertexArray(0);
+
+        glfwSwapBuffers(window);  
+        glfwPollEvents();
+    }
+    glDeleteVertexArrays(1, &VAORectangle); 
+    glDeleteVertexArrays(1, &VAOTriangle); 
+    // TODO how to delete the buffers dynamically ? 
+    //glDeleteBuffers(1, &VBO);
+    glDeleteProgram(shaderProgram); 
+
+    glfwTerminate();
+
+    return 0;
+}
+
+void processInput(GLFWwindow *window){
+    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) 
+        glfwSetWindowShouldClose(window, true);
+}
+void framebuffer_size_callback(GLFWwindow* window, int width, int height){
+    glViewport(0, 0, width, height);
+}
+unsigned int basicVertexShader() {
      unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
      glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
      glCompileShader(vertexShader);
@@ -55,42 +119,32 @@ int main() {
         std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl; 
 
      }
-
-     // Fragment shader 
-
+     return vertexShader;
+}
+unsigned int basicFragmentShader() {
      unsigned int fragmentShader; 
      fragmentShader = glCreateShader(GL_FRAGMENT_SHADER); 
      glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL); 
      glCompileShader(fragmentShader); 
 
+     int success; 
+     char infoLog[512]; 
      glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success); 
 
      if(!success){
         glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);  
         std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl; 
      }
+    return fragmentShader;
 
-     // shader program 
-     unsigned int shaderProgram = glCreateProgram(); 
-     glAttachShader(shaderProgram, vertexShader); 
-     glAttachShader(shaderProgram, fragmentShader); 
-     glLinkProgram(shaderProgram);
+}
 
-     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success); 
-     if(!success){
-        glGetShaderInfoLog(shaderProgram, 512, NULL, infoLog);  
-        std::cout << "ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n" << infoLog << std::endl; 
-     }
-     glDeleteShader(vertexShader); 
-     glDeleteShader(fragmentShader);
-
-
-    // vertex input 
+unsigned int drawRectangle() {
     float vertices[] = {
-        0.5f, -0.5f, 0.0f, 
-        0.5f, 0.5f, 0.0f, 
-        -0.5f, -0.5f, 0.0f, 
-        -0.5f, 0.5f, 0.0f, 
+        0.5f, 0.0f, 0.0f, 
+        0.5f, 1.0f, 0.0f, 
+        -0.5f, 0.0f, 0.0f, 
+        -0.5f, 1.0f, 0.0f, 
     };
 
     unsigned int indices[] = {
@@ -118,39 +172,29 @@ int main() {
     glBindVertexArray(0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    bool line = false ;
-// RENDER
-    while(!glfwWindowShouldClose(window)){
-        
-        processInput(window); 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glUseProgram(shaderProgram); 
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        line = true;
-        }
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
-
-        glfwSwapBuffers(window);  
-        glfwPollEvents();
-    }
-    glDeleteVertexArrays(1, &VAO); 
-    glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shaderProgram); 
-
-    glfwTerminate();
-
-    return 0;
+    return VAO;
 }
+unsigned int drawTriangle(int position){
+    float vertices[] = {
+        0.5f, -0.5f, 0.0f, 
+        0.5f, 0.5f, 0.0f, 
+        -0.5f, -0.5f, 0.0f, 
+    };
 
-void processInput(GLFWwindow *window){
-    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) 
-        glfwSetWindowShouldClose(window, true);
-}
-void framebuffer_size_callback(GLFWwindow* window, int width, int height){
-    glViewport(0, 0, width, height);
+    unsigned int VBO, VAO; 
+    glGenVertexArrays(1, &VAO); 
+    glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); 
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); 
+    glEnableVertexAttribArray(0); 
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    // Don't unbind the ebo while vao is active !
+    glBindVertexArray(0);
+
+    return VAO;
 }
