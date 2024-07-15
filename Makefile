@@ -8,7 +8,7 @@ CFLAGS=-Wall -g
 CPPFLAGS=-Wall -g
 
 
-LIBS=-lglfw -framework Cocoa -framework OpenGL -framework IOKit
+LIBS=-lglfw -framework Cocoa -framework OpenGL -framework IOKit 
 
 
 default: all 
@@ -20,10 +20,10 @@ glad.o : $(C_SRC)
 myprog.o : $(CPP_SRC)
 	clang++ $(CPPFLAGS) $(INC) -c $< -o $@
 
-myprog: glad.o myprog.o 
+build : glad.o myprog.o 
 	clang++ $(CPPFLAGS) -o myprog glad.o myprog.o $(LIBS) 
 
-run : myprog
+run : build 
 	./myprog
 
 clean: 
