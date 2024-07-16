@@ -30,7 +30,7 @@ int main() {
 
     // Successfully loaded OpenGL
     printf("Loaded OpenGL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
-    
+
     glViewport(0, 0, 800, 600);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
@@ -42,29 +42,29 @@ int main() {
 
 
     Shader treeShader("./src/shaders/treeShader.vs", "./src/shaders/treeShader.fs");
-    Node *root = new Node(); 
-    Node *a = new Node(root); 
-    Node *b = new Node(root); 
-     new Node(root); 
-     new Node(root); 
-     new Node(root); 
-     new Node(a); 
-     new Node(b); 
-    Tree tree(&treeShader, root);
+    //Node *root = new Node(); 
+    // Node *a = new Node(root);
+    //Node *b = new Node(root); 
+    //new Node(root); 
+    //new Node(root); 
+    //new Node(root); 
+    //new Node(a); 
+    //new Node(b); 
+    //Tree tree(&treeShader, root, 4, 4);
 
-// RENDER
+    // RENDER
     while(!glfwWindowShouldClose(window)){
-        
+
         processInput(window); 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        tree.drawTree(); 
+        //    tree.drawTree(); 
 
         glfwSwapBuffers(window);  
         glfwPollEvents();
     }
-    tree.deleteAll();
+    //tree.deleteAll();
     // TODO how to delete the buffers dynamically ? 
     //glDeleteBuffers(1, &VBO);
 
