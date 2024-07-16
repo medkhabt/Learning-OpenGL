@@ -5,7 +5,7 @@ CPP_SRC=src/myprog.cpp
 
 # I shouldn't forget about the debugging flag. 
 CFLAGS=-Wall -g
-CPPFLAGS=-Wall -g
+CPPFLAGS= -std=c++11 -Wall -g
 
 
 LIBS=-lglfw -framework Cocoa -framework OpenGL -framework IOKit 

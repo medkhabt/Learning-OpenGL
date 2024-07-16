@@ -1,36 +1,70 @@
 #ifndef TREE_H 
 #define TREE_H
 
+#include <vector>
+#include <queue>
+#include "node.h"
 class Tree {
     public : 
       Shader* shader; 
       unsigned int vaoId;   
-      //Node* root; 
-      Tree(Shader* shader): shader(shader){
+      Node* root; 
+      std::vector<int> levels; 
+      Tree(Shader* shader, Node* root): shader(shader), root(root){
         this->vaoId = buildRectangle();  
       }
       // TODO implememnt this
       unsigned int getMaxVertexesInLevel(){
-        return 8;  
+        return 5;  
       }
+      ~Tree() {
+        delete this->root;  
+      }
+      
       void drawTree() {
-          int maxVertexesPerLevel = 10;
-          unsigned int treeLayout[3] = {1, 2, maxVertexesPerLevel};  
-
+          // drawNode(), getChildren 
+          std::queue<Node*> nodesQueue;
+          Node* currNode; 
+          nodesQueue.push(root); 
           this->shader->use();
-          for(int i = 0 ; i < sizeof(treeLayout)/sizeof(treeLayout[0]); i++){
-              for ( int j = 0; j < treeLayout[i]; j++) {
-                  drawNode(j, i); 
+          int i = 0; 
+          while(!nodesQueue.empty()){
+              currNode = nodesQueue.front();
+              //std::cout << "front is : node with (pos =  " << currNode->position << ", level= " << currNode->level << ")" << std::endl; 
+              i++;
+              nodesQueue.pop();
+
+              drawNode(currNode->position, currNode->level);
+
+              if(this->levels.size() <= currNode->level){
+                  this->levels.push_back(1);
+              } else {
+                  this->levels[currNode->level]++; 
               }
+
+              for(auto &c : currNode->children){
+                  nodesQueue.push(c);
+              }
+
           }
+
+          //int maxVertexesPerLevel = 10;
+          //unsigned int treeLayout[3] = {1, 2, maxVertexesPerLevel};  
+
+          //for(int i = 0 ; i < sizeof(treeLayout)/sizeof(treeLayout[0]); i++){
+              //for ( int j = 0; j < treeLayout[i]; j++) {
+                  //drawNode(j, i); 
+              //}
+          //}
       }
       void drawNode(int position, int level) {
           unsigned int maxVertexesPerLevel = this->getMaxVertexesInLevel();
           float x = (200.0f * 2.0f) / float(3 * maxVertexesPerLevel - 2);  
           float gx = ( maxVertexesPerLevel + 2 ) * 200.0f / ((maxVertexesPerLevel - 1) * (3 * maxVertexesPerLevel + 2)) ;
+          float gy = ( 3 + 2 ) * 200.0f / ((3 - 1) * (3 * 3 + 2)) ;
           glm::mat4 model = glm::mat4(1.0f); 
           // TODO make the translation dynamic on the y axis
-          model = glm::translate(model, glm::vec3(-100.0f + x/2 + position * (x + gx), 100.0f - x/2 - level * (2 * x ) , 0.0f));
+          model = glm::translate(model, glm::vec3(-100.0f + x/2 + position * (x + gx), 100.0f - x/2 - level * (x + gx/3) , 0.0f));
           model = glm::scale(model, glm::vec3(x/20.0f, x/20.0f, 1.0f));
           int modelLoc = glGetUniformLocation(shader->ID, "model");
           glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
@@ -41,6 +75,7 @@ class Tree {
           glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
           //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
           glBindVertexArray(this->vaoId);
+          std::cout << "drawing pos: " << position << ", level: " << level << std::endl;
           glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
       }
       unsigned int buildRectangle() {

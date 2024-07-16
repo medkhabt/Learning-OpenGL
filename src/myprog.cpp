@@ -7,6 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "shader.h"
 #include "tree.h"
+#include "node.h"
 
 void processInput(GLFWwindow *window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height); 
@@ -41,7 +42,15 @@ int main() {
 
 
     Shader treeShader("./src/shaders/treeShader.vs", "./src/shaders/treeShader.fs");
-    Tree tree(&treeShader);
+    Node *root = new Node(); 
+    Node *a = new Node(root); 
+    Node *b = new Node(root); 
+     new Node(root); 
+     new Node(root); 
+     new Node(root); 
+     new Node(a); 
+     new Node(b); 
+    Tree tree(&treeShader, root);
 
 // RENDER
     while(!glfwWindowShouldClose(window)){
