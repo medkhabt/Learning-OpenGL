@@ -25,12 +25,9 @@ class Tree {
 
         std::vector<int> levels; 
 
-        Tree(Shader* shader, Node* root, unsigned int siblingSep, unsigned int subtreeSep): shader(shader), root(root), siblingSeparation(siblingSep), subtreeSeparation(subtreeSep) {
+        Tree(Shader* shader, Node* root, unsigned int siblingSep, unsigned int subtreeSep, unsigned levelSeparation):  shader(shader), root(root), siblingSeparation(siblingSep), subtreeSeparation(subtreeSep), levelSeparation(levelSeparation){
             this->prevNode.push_back(root);
-            this->vaoId = buildRectangle();  
-        }
-        Tree(Node* root, unsigned int siblingSep, unsigned int subtreeSep, unsigned levelSeparation):  root(root), siblingSeparation(siblingSep), subtreeSeparation(subtreeSep), levelSeparation(levelSeparation){
-            this->prevNode.push_back(root);
+            this->vaoId = buildRectangle(root->width);  
         }
         // TODO implememnt this
         unsigned int getMaxVertexesInLevel(){
@@ -175,6 +172,7 @@ class Tree {
                 node->x = xTemp;  
                 node->y = yTemp; 
                 std::cout << "Node " << node->name << " :(" << node->x << "," << node->y << ")"<< std::endl;
+                drawNode(node->x, node->y, node->width);
                 if (node->hasChild()){
                     result = secondWalk(node->firstChild, level + 1, modSum + node->modifier); 
                 }
@@ -187,6 +185,8 @@ class Tree {
             return result ;
         }
         bool positionTree(Node* node){
+            glBindVertexArray(this->vaoId);
+            this->shader->use();
             if (node != NULL) {
                 // INITPREVNODELIST    
                 std::cout << "TREE.H:: execute initPrevNodeList" << std::endl;
@@ -208,69 +208,32 @@ class Tree {
 
         // ******************* END WALKER ALGO ***********************************
         void drawTree() {
-            // drawNode(), getChildren 
-            std::queue<Node*> nodesQueue;
-            Node* currNode; 
-            nodesQueue.push(root); 
-            this->shader->use();
-            int i = 0; 
-            while(!nodesQueue.empty()){
-                currNode = nodesQueue.front();
-                //std::cout << "front is : node with (pos =  " << currNode->position << ", level= " << currNode->level << ")" << std::endl; 
-                i++;
-                nodesQueue.pop();
-
-                drawNode(currNode->position, currNode->level);
-
-                if(this->levels.size() <= currNode->level){
-                    this->levels.push_back(1);
-                } else {
-                    this->levels[currNode->level]++; 
-                }
-
-                for(auto &c : currNode->children){
-                    nodesQueue.push(c);
-                }
-
-            }
-
-            //int maxVertexesPerLevel = 10;
-            //unsigned int treeLayout[3] = {1, 2, maxVertexesPerLevel};  
-
-            //for(int i = 0 ; i < sizeof(treeLayout)/sizeof(treeLayout[0]); i++){
-            //for ( int j = 0; j < treeLayout[i]; j++) {
-            //drawNode(j, i); 
-            //}
-            //}
+            drawNode(0.0f,0.0f,10.0f);            
         }
-        void drawNode(int position, int level) {
-            unsigned int maxVertexesPerLevel = this->getMaxVertexesInLevel();
-            float x = (200.0f * 2.0f) / float(3 * maxVertexesPerLevel - 2);  
-            float gx = ( maxVertexesPerLevel + 2 ) * 200.0f / ((maxVertexesPerLevel - 1) * (3 * maxVertexesPerLevel + 2)) ;
-            float gy = ( 3 + 2 ) * 200.0f / ((3 - 1) * (3 * 3 + 2)) ;
+        void drawNode(float x, float y, float width){
             glm::mat4 model = glm::mat4(1.0f); 
-            // TODO make the translation dynamic on the y axis
-            model = glm::translate(model, glm::vec3(-100.0f + x/2 + position * (x + gx), 100.0f - x/2 - level * (x + gx/3) , 0.0f));
-            model = glm::scale(model, glm::vec3(x/20.0f, x/20.0f, 1.0f));
+            //width = 20.0f;
+            model = glm::translate(model, glm::vec3(x-width/2, y+width/2, 0.0f));
+            //model = glm::scale(model, glm::vec3(x/20.0f, x/20.0f, 1.0f));
             int modelLoc = glGetUniformLocation(shader->ID, "model");
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-
             glm::mat4 projection = glm::mat4(1.0f);
-            projection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, 0.0f, 10.0f); 
+            projection = glm::ortho(-200.0f, 200.0f, -200.0f, 200.0f, 0.0f, 10.0f); 
             int projectionLoc = glGetUniformLocation(shader->ID, "projection");
             glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
             //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glBindVertexArray(this->vaoId);
-            std::cout << "drawing pos: " << position << ", level: " << level << std::endl;
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         }
-        unsigned int buildRectangle() {
+        unsigned int buildRectangle(float width) {
             // Addind the spacing in the calculation ( half of the node width )
+            width = width/2;
+            width = 10.0f;
             float vertices[] = {
-                10.0f, -10.0f, 0.0f, 
-                10.0f, 10.0f, 0.0f, 
-                -10.0f, 10.0f, 0.0f, 
-                -10.0f, -10.0f, 0.0f, 
+                width, -width, 0.0f, 
+                width, width, 0.0f, 
+                -width, width, 0.0f, 
+                -width, -width, 0.0f, 
             };
 
             unsigned int indices[] = {

@@ -6,16 +6,16 @@
 class Node {
     public:
         std::string name;
-        Node* parent; 
-        Node* firstChild; 
-        Node* leftSibling; 
-        Node* rightSibling; 
+        Node* parent = NULL; 
+        Node* firstChild = NULL; 
+        Node* leftSibling = NULL; 
+        Node* rightSibling = NULL; 
         float width; 
         float x; 
         float  y; 
         float prelimX; 
         float modifier; 
-        Node* leftNeighbor; 
+        Node* leftNeighbor = NULL; 
 
 
         unsigned int level; 
@@ -24,18 +24,19 @@ class Node {
 
 
         Node(Node* parent, std::string name, float x, float y ):  name(name), parent(parent), x(x), y(y) {
+                this->width = 20.0f;
             if(parent != NULL){
                 if(parent->firstChild == NULL){
                     parent->firstChild = this; 
                 }else {
                     Node* tempNode = parent->firstChild; 
-                    while(tempNode != NULL && tempNode->rightSibling != NULL) {
+                    // i dont get the error but doing this to avoid it.
+                    while(tempNode->rightSibling != nullptr) {
                         tempNode = tempNode->rightSibling; 
                     }
                     tempNode->rightSibling = this; 
                     this->leftSibling = tempNode;
                 }
-                this->width = 20.0f;
                 this->level = parent->level + 1;  
                 position = parent->children.size();
                 parent->children.push_back(this);
