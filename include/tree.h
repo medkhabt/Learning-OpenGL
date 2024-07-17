@@ -12,7 +12,8 @@
 class Tree {
     public : 
         Shader* shader; 
-        unsigned int vaoId;   
+        unsigned int vaoRectangleId;   
+        unsigned int vaoArrowId;   
         Node* root; 
         unsigned int siblingSeparation; 
         unsigned int subtreeSeparation; 
@@ -20,6 +21,7 @@ class Tree {
         float yTopAdjustment; 
         unsigned int levelSeparation;
         std::vector<Node*> prevNode; 
+        float rootY; 
 
 
 
@@ -27,7 +29,9 @@ class Tree {
 
         Tree(Shader* shader, Node* root, unsigned int siblingSep, unsigned int subtreeSep, unsigned levelSeparation):  shader(shader), root(root), siblingSeparation(siblingSep), subtreeSeparation(subtreeSep), levelSeparation(levelSeparation){
             this->prevNode.push_back(root);
-            this->vaoId = buildRectangle(root->width);  
+            this->rootY = root->y;
+            this->vaoRectangleId = buildRectangle(root->width);  
+            this->vaoArrowId = buildArrow();
         }
         // TODO implememnt this
         unsigned int getMaxVertexesInLevel(){
@@ -74,7 +78,8 @@ class Tree {
             Node* neighbor = leftMost->leftNeighbor;  
             unsigned int compareDepth = 1; 
             // int depthToStop = this->MaxDepth - level; 
-            Node* ancestorLeftMost, *ancestorNeighbor;
+            Node* ancestorLeftMost = NULL; 
+            Node *ancestorNeighbor = NULL;
             int leftModSum;  
             int rightModSum;
             while(leftMost != NULL && neighbor != NULL){
@@ -123,6 +128,9 @@ class Tree {
             }
         }
         void firstWalk(Node* node, unsigned int level){
+            if (this->prevNode.size() <= level){
+                this->prevNode.push_back(NULL); 
+            } 
             node->leftNeighbor = this->prevNode[level]; 
             // This node becomes the prevNode in its level.
             this->prevNode[level] = node;  
@@ -166,13 +174,17 @@ class Tree {
         bool secondWalk(Node* node, unsigned int level, int modSum){
             // max depth can be impl here. 
             float xTemp = this->xTopAdjustment + node->prelimX + modSum; 
-            float yTemp = this->yTopAdjustment + ( level * this->levelSeparation ) ;
+            float yTemp = this->yTopAdjustment - ( level * this->levelSeparation ) ;
             bool result = true;
             if (checkextentsrange(xTemp, yTemp)){
                 node->x = xTemp;  
                 node->y = yTemp; 
-                std::cout << "Node " << node->name << " :(" << node->x << "," << node->y << ")"<< std::endl;
-                drawNode(node->x, node->y, node->width);
+                if(node->parent !=NULL){
+                    node->arrowAmp= sqrt(pow(node->x - node->parent->x, 2) + pow(node->y - node->parent->y + node->width, 2));
+                    node->arrowAngle= acos((node->x - node->parent->x) / node->arrowAmp); 
+                }
+
+                std::cout << "Node " << node->name << " :(" << node->x << "," << node->y << ") and Amplitude is " << node->arrowAmp << " and angle is " << node->arrowAngle* 360 / (2 * M_PI) <<std::endl;
                 if (node->hasChild()){
                     result = secondWalk(node->firstChild, level + 1, modSum + node->modifier); 
                 }
@@ -184,22 +196,20 @@ class Tree {
             }
             return result ;
         }
-        bool positionTree(Node* node){
-            glBindVertexArray(this->vaoId);
-            this->shader->use();
-            if (node != NULL) {
+        bool positionTree(){
+            if (this->root != NULL) {
                 // INITPREVNODELIST    
                 std::cout << "TREE.H:: execute initPrevNodeList" << std::endl;
                 initPrevNodeList();
 
                 std::cout << "TREE.H:: execute first firstWalk" << std::endl;
-                firstWalk(node, 0);
+                firstWalk(this->root , 0);
                 std::cout << "TREE.H:: end the recursion of firstWalk " <<std::endl;
-                this->xTopAdjustment = node->x - node->prelimX; 
-                this->yTopAdjustment = node->y;
+                this->xTopAdjustment = this->root->x - this->root->prelimX; 
+                this->yTopAdjustment = this->root->y;
 
                 std::cout << "TREE.H:: execute first secondWalk" << std::endl;
-                return secondWalk(node, 0, 0);
+                return secondWalk(this->root, 0, 0);
 
             } else {
                 return true; 
@@ -207,28 +217,60 @@ class Tree {
         } 
 
         // ******************* END WALKER ALGO ***********************************
+
         void drawTree() {
-            drawNode(0.0f,0.0f,10.0f);            
+            std::queue<Node*> visited;  
+            Node* currNode = this->root;
+            Node* sibling;
+            visited.push(currNode);
+            this->shader->use(); 
+            while(!visited.empty()){
+                currNode = visited.front(); 
+                sibling = currNode;
+                visited.pop();
+                drawNode(currNode); 
+                if(currNode->parent != NULL && currNode == currNode->parent->firstChild){
+                    while(sibling->hasRightSibling()){
+                        visited.push(sibling->rightSibling);
+                        sibling = sibling->rightSibling; 
+                    }
+                }
+                if(currNode->hasChild()){
+                    visited.push(currNode->firstChild);
+                }
+            }
         }
-        void drawNode(float x, float y, float width){
+        void drawNode(Node* node){
             glm::mat4 model = glm::mat4(1.0f); 
             //width = 20.0f;
-            model = glm::translate(model, glm::vec3(x-width/2, y+width/2, 0.0f));
+            model = glm::translate(model, glm::vec3(node->x - node->width / 2, node->y + node->width / 2, 0.0f));
             //model = glm::scale(model, glm::vec3(x/20.0f, x/20.0f, 1.0f));
             int modelLoc = glGetUniformLocation(shader->ID, "model");
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
             glm::mat4 projection = glm::mat4(1.0f);
-            projection = glm::ortho(-200.0f, 200.0f, -200.0f, 200.0f, 0.0f, 10.0f); 
+            projection = glm::ortho(-400.0f, 400.0f, -(this->rootY *3/2), (this->rootY*3/2) , 0.0f, 10.0f); 
             int projectionLoc = glGetUniformLocation(shader->ID, "projection");
             glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
             //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glBindVertexArray(this->vaoId);
+            glBindVertexArray(this->vaoRectangleId);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+            glBindVertexArray(this->vaoArrowId); 
+            if(node->parent != NULL){
+            
+            model = glm::mat4(1.0f); 
+            model = glm::translate(model, glm::vec3(node->x - node->width / 2 , node->y + node->width, 0.0f));
+            model = glm::rotate(model, -node->arrowAngle, glm::vec3(0.0, 0.0, 1.0));
+            model = glm::scale(model, glm::vec3(node->arrowAmp/10.0f, 1.0f, 1.0f));
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+            glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+            glDrawArrays(GL_LINES, 0, 2);
+            }
         }
         unsigned int buildRectangle(float width) {
             // Addind the spacing in the calculation ( half of the node width )
             width = width/2;
-            width = 10.0f;
             float vertices[] = {
                 width, -width, 0.0f, 
                 width, width, 0.0f, 
@@ -263,8 +305,31 @@ class Tree {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
             return VAO;
         }
+        unsigned int buildArrow() {
+            float vertices[] = {
+                0.0f, 0.0f, 0.0f,
+                -10.0f, 0.0f, 0.0f
+            }; 
+            unsigned int VBO, VAO; 
+            glGenVertexArrays(1, &VAO); 
+            glGenBuffers(1, &VBO);
+
+            glBindVertexArray(VAO);
+            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); 
+
+
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); 
+            glEnableVertexAttribArray(0); 
+
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindVertexArray(0);
+            return VAO; 
+
+        }
         void deleteAll() {
-            glDeleteVertexArrays(1, &vaoId); 
+            glDeleteVertexArrays(1, &vaoRectangleId); 
+            glDeleteVertexArrays(1, &vaoArrowId); 
             glDeleteProgram(shader->ID); 
         }
         };

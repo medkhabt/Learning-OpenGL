@@ -10,21 +10,17 @@ class Node {
         Node* firstChild = NULL; 
         Node* leftSibling = NULL; 
         Node* rightSibling = NULL; 
+        Node* leftNeighbor = NULL; 
         float width; 
         float x; 
-        float  y; 
+        float y; 
+        float arrowAmp; 
+        float arrowAngle;
         float prelimX; 
         float modifier; 
-        Node* leftNeighbor = NULL; 
 
-
-        unsigned int level; 
-        unsigned int position; 
-        std::vector<Node*> children; 
-
-
-        Node(Node* parent, std::string name, float x, float y ):  name(name), parent(parent), x(x), y(y) {
-                this->width = 20.0f;
+        Node(Node* parent, std::string name, float x, float y):  name(name), parent(parent), x(x), y(y) {
+            this->width = 20.0f;
             if(parent != NULL){
                 if(parent->firstChild == NULL){
                     parent->firstChild = this; 
@@ -37,10 +33,6 @@ class Node {
                     tempNode->rightSibling = this; 
                     this->leftSibling = tempNode;
                 }
-                this->level = parent->level + 1;  
-                position = parent->children.size();
-                parent->children.push_back(this);
-
             }
         }
         // TODO DELETE all the subtree of the node.
