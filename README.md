@@ -12,8 +12,6 @@ class on algorithmes for graph visualization. But it was specific to binary tree
 After a small search, i came a cross Walker algorithm for general tree drawing.
 [Walker, J. Q. (1990). A node‐positioning algorithm for general trees. Software, Practice & Experience/Software, Practice and Experience, 20(7), 685–705. https://doi.org/10.1002/spe.4380200705](https://www.cs.unc.edu/techreports/89-034.pdf)
 
-Currently this is all I got are the nodes in an ugly way, I just need to put info on the nodes 
-    and connect them. Also there is the problem of scaling, i need to be careful not to cut the graph if it is too 
-    big to be presented on the screen (dynamic scaling of the screen [work on the projection matrix!]) 
+## Progress:
 ![progress](.resources/progress.png)
 
