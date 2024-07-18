@@ -19,9 +19,10 @@ class Tree {
         unsigned int subtreeSeparation; 
         float xTopAdjustment; 
         float yTopAdjustment; 
+        unsigned int maxLevel; 
         unsigned int levelSeparation;
         std::vector<Node*> prevNode; 
-        float rootY; 
+        float* pRootY; 
 
 
 
@@ -29,7 +30,8 @@ class Tree {
 
         Tree(Shader* shader, Node* root, unsigned int siblingSep, unsigned int subtreeSep, unsigned levelSeparation):  shader(shader), root(root), siblingSeparation(siblingSep), subtreeSeparation(subtreeSep), levelSeparation(levelSeparation){
             this->prevNode.push_back(root);
-            this->rootY = root->y;
+            this->maxLevel = 0;
+            this->pRootY = &root->y;
             this->vaoRectangleId = buildRectangle(root->width);  
             this->vaoArrowId = buildArrow();
         }
@@ -185,6 +187,7 @@ class Tree {
                 }
 
                 std::cout << "Node " << node->name << " :(" << node->x << "," << node->y << ") and Amplitude is " << node->arrowAmp << " and angle is " << node->arrowAngle* 360 / (2 * M_PI) <<std::endl;
+                this->maxLevel = (this->maxLevel < level) ? level : this->maxLevel;
                 if (node->hasChild()){
                     result = secondWalk(node->firstChild, level + 1, modSum + node->modifier); 
                 }
@@ -248,7 +251,7 @@ class Tree {
             int modelLoc = glGetUniformLocation(shader->ID, "model");
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
             glm::mat4 projection = glm::mat4(1.0f);
-            projection = glm::ortho(-400.0f, 400.0f, -(this->rootY *3/2), (this->rootY*3/2) , 0.0f, 10.0f); 
+            projection = glm::ortho(-400.0f, 400.0f, -(float(this->maxLevel * this->levelSeparation * 3)/4), (float(this->maxLevel * this->levelSeparation * 3)/4) , 0.0f, 10.0f); 
             int projectionLoc = glGetUniformLocation(shader->ID, "projection");
             glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
             //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -257,25 +260,25 @@ class Tree {
 
             glBindVertexArray(this->vaoArrowId); 
             if(node->parent != NULL){
-            
-            model = glm::mat4(1.0f); 
-            model = glm::translate(model, glm::vec3(node->x - node->width / 2 , node->y + node->width, 0.0f));
-            model = glm::rotate(model, -node->arrowAngle, glm::vec3(0.0, 0.0, 1.0));
-            model = glm::scale(model, glm::vec3(node->arrowAmp/10.0f, 1.0f, 1.0f));
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-            glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-            glDrawArrays(GL_LINES, 0, 2);
+                model = glm::mat4(1.0f); 
+                model = glm::translate(model, glm::vec3(node->x - node->width / 2 , node->y + node->width, 0.0f));
+                model = glm::rotate(model, -node->arrowAngle, glm::vec3(0.0, 0.0, 1.0));
+                model = glm::scale(model, glm::vec3(node->arrowAmp/10.0f, 1.0f, 1.0f));
+                glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+                glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+                glDrawArrays(GL_LINES, 0, 2);
             }
         }
         unsigned int buildRectangle(float width) {
             // Addind the spacing in the calculation ( half of the node width )
             width = width/2;
             float vertices[] = {
-                width, -width, 0.0f, 
-                width, width, 0.0f, 
-                -width, width, 0.0f, 
-                -width, -width, 0.0f, 
+                width, -width, 0.0f,
+                width, width, 0.0f,
+                -width, width, 0.0f,
+                -width, -width, 0.0f
             };
 
             unsigned int indices[] = {
@@ -308,7 +311,8 @@ class Tree {
         unsigned int buildArrow() {
             float vertices[] = {
                 0.0f, 0.0f, 0.0f,
-                -10.0f, 0.0f, 0.0f
+                -10.0f, 0.0f, 0.0f, 
+
             }; 
             unsigned int VBO, VAO; 
             glGenVertexArrays(1, &VAO); 

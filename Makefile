@@ -1,4 +1,4 @@
-INC=-I./include
+INC=-I./include -I/usr/local/include/freetype2
 
 C_SRC=$(wildcard src/*.c)
 CPP_SRC=$(wildcard src/*.cpp)
@@ -9,7 +9,7 @@ CFLAGS=-Wall -g
 CPPFLAGS= -std=c++11 -Wall -g
 
 
-LIBS=-lglfw -framework Cocoa -framework OpenGL -framework IOKit 
+LIBS=-lglfw -framework Cocoa -framework OpenGL -framework IOKit -lfreetype
 
 
 C_OBJS=$(C_SRC:.c=.o)
@@ -18,7 +18,7 @@ CPP_TST_OBJS=$(CPP_TST:.cpp=.o)
 
 default: all 
 
-all: run 
+all: clean run 
 
 %.o: %.c 
 	clang $(CFLAGS) $(INC) -c $< -o $@
