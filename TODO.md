@@ -1,5 +1,6 @@
-## TODOS
-### Issues
+# TODOS
+## Issues
+### Planar drawing
 the drawing isn't planar for this tree 
 ```cpp
 Node* s = new Node(NULL, "S", 0, 200); 
@@ -24,3 +25,6 @@ Node* c15 = new Node(c1, "C15", 0, 0);
 ```
 it results in this drawing 
 ![drawing not planar](.resources/notPlanar.png)
+
+### Glyph representing '1'
+It looks whenever i display a char '1', it puts more space between itself and the character before. I need to play with the bearingX in case of glyph representing 1.

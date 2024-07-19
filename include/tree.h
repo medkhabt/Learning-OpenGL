@@ -181,12 +181,12 @@ class Tree {
             if (checkextentsrange(xTemp, yTemp)){
                 node->x = xTemp;  
                 node->y = yTemp; 
+                std::cout << "Node " << node->name << " :(" << node->x << "," << node->y << ") and Amplitude is " << node->arrowAmp << " and angle is " << node->arrowAngle* 360 / (2 * M_PI) <<std::endl;
                 if(node->parent !=NULL){
                     node->arrowAmp= sqrt(pow(node->x - node->parent->x, 2) + pow(node->y - node->parent->y + node->width, 2));
                     node->arrowAngle= acos((node->x - node->parent->x) / node->arrowAmp); 
                 }
 
-                std::cout << "Node " << node->name << " :(" << node->x << "," << node->y << ") and Amplitude is " << node->arrowAmp << " and angle is " << node->arrowAngle* 360 / (2 * M_PI) <<std::endl;
                 this->maxLevel = (this->maxLevel < level) ? level : this->maxLevel;
                 if (node->hasChild()){
                     result = secondWalk(node->firstChild, level + 1, modSum + node->modifier); 
@@ -246,12 +246,15 @@ class Tree {
         void drawNode(Node* node){
             glm::mat4 model = glm::mat4(1.0f); 
             //width = 20.0f;
-            model = glm::translate(model, glm::vec3(node->x - node->width / 2, node->y + node->width / 2, 0.0f));
+            int xFinal = node->x - node->width / 2;
+            int yFinal = node->y + node->width / 2;
+            model = glm::translate(model, glm::vec3(xFinal, yFinal, 0.0f));
             //model = glm::scale(model, glm::vec3(x/20.0f, x/20.0f, 1.0f));
             int modelLoc = glGetUniformLocation(shader->ID, "model");
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
             glm::mat4 projection = glm::mat4(1.0f);
-            projection = glm::ortho(-400.0f, 400.0f, -(float(this->maxLevel * this->levelSeparation * 3)/4), (float(this->maxLevel * this->levelSeparation * 3)/4) , 0.0f, 10.0f); 
+            float yAxisProjection = (float(this->maxLevel * this->levelSeparation * 3)/4); 
+            projection = glm::ortho(-400.0f, 400.0f, -yAxisProjection, yAxisProjection , 0.0f, 10.0f); 
             int projectionLoc = glGetUniformLocation(shader->ID, "projection");
             glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
             //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
