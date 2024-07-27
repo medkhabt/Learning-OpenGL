@@ -50,7 +50,7 @@ class Node {
         }
         //TODO specify the width on the constructor.
         void buildNode(); 
-        void drawNode(Shader* shader, int maxLevel, int levelSeparation);
+        void drawNode(Shader* shader, Node* root, int maxLevel, int levelSeparation);
         // TODO DELETE all the subtree of the node.
         bool isLeaf(){
             return this->firstChild == NULL; 

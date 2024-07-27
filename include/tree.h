@@ -232,7 +232,7 @@ class Tree {
                 currNode = visited.front(); 
                 sibling = currNode;
                 visited.pop();
-                currNode->drawNode(this->shader, this->maxLevel, this->levelSeparation); 
+                currNode->drawNode(this->shader, this->root, this->maxLevel, this->levelSeparation); 
                 if(currNode->parent != NULL && currNode == currNode->parent->firstChild){
                     while(sibling->hasRightSibling()){
                         visited.push(sibling->rightSibling);
