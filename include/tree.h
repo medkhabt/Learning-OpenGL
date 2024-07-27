@@ -181,6 +181,7 @@ class Tree {
             if (checkextentsrange(xTemp, yTemp)){
                 node->x = xTemp;  
                 node->y = yTemp; 
+                node->buildNode();
                 std::cout << "Node " << node->name << " :(" << node->x << "," << node->y << ") and Amplitude is " << node->arrowAmp << " and angle is " << node->arrowAngle* 360 / (2 * M_PI) <<std::endl;
                 if(node->parent !=NULL){
                     node->arrowAmp= sqrt(pow(node->x - node->parent->x, 2) + pow(node->y - node->parent->y + node->height, 2));
@@ -231,7 +232,6 @@ class Tree {
                 currNode = visited.front(); 
                 sibling = currNode;
                 visited.pop();
-                currNode->buildNode();
                 currNode->drawNode(this->shader, this->maxLevel, this->levelSeparation); 
                 if(currNode->parent != NULL && currNode == currNode->parent->firstChild){
                     while(sibling->hasRightSibling()){
