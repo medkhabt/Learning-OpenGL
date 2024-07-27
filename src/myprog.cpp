@@ -134,7 +134,7 @@ int main() {
 
         VAOT = buildRectangle();
         textureShader.use();
-        glBindTexture(GL_TEXTURE_2D, texture); 
+        //glBindTexture(GL_TEXTURE_2D, texture); 
         glBindVertexArray(VAOT);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 

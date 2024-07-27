@@ -98,28 +98,21 @@ void Node::buildNode() {
     glBindTexture(GL_TEXTURE_2D, this->texture);
     for(size_t k = 0 ; k < this->name.size(); k++){
         if(FT_Load_Char(face, (unsigned char)this->name[k], FT_LOAD_RENDER)){
-            //if(FT_Load_Char(face, (int)this->name[k], FT_LOAD_RENDER)){
             std::cout << "ERROR::FREETYPE: Failed to load Glyph for character " << this->name[k] << std::endl;
             continue; 
         }
-        if (k == 0){
-            max_dim = (1 + (static_cast<unsigned int>(face->glyph->metrics.width) >> 6)) * this->name.size();  
-            tex_height = (1 + (static_cast<unsigned int>(face->glyph->metrics.height) >> 6)); 
-            //max_dim = 16 * this->name.size();
-            while(tex_width < max_dim) tex_width <<= 1;
-            pixels = (char*)calloc(tex_width * tex_height, 1);
-            /*    glTexImage2D(
-                  GL_TEXTURE_2D, 
-                  0,
-                  GL_RED, 
-                  face->glyph->bitmap.width, 
-                  face->glyph->bitmap.rows, 
-                  0,
-                  GL_RED,
-                  GL_UNSIGNED_BYTE, 
-                  face->glyph->bitmap.buffer
-                  );
-                  */
+        max_dim +=  static_cast<unsigned int>(face->glyph->metrics.width) >> 6;
+        int h = static_cast<unsigned int>(face->glyph->metrics.height) >> 6;
+        if(tex_height < h ){
+            tex_height = h;  
+        }
+    }
+    while(tex_width < max_dim) tex_width <<= 1;
+    pixels = (char*)calloc(tex_width * tex_height, 1);
+    for(size_t k = 0 ; k < this->name.size(); k++){
+        if(FT_Load_Char(face, (unsigned char)this->name[k], FT_LOAD_RENDER)){
+            std::cout << "ERROR::FREETYPE: Failed to load Glyph for character " << this->name[k] << std::endl;
+            continue; 
         }
         FT_Bitmap * bmp = &face->glyph->bitmap; 
 
@@ -139,126 +132,125 @@ void Node::buildNode() {
         };
         Characters.insert(std::pair<char, Character>(this->name[k],character));
         pen_y += bmp->width + 1;
-        }
-
-        glTexImage2D(
-                GL_TEXTURE_2D, 
-                0,
-                GL_RED, 
-                tex_width,  
-                tex_height,
-                0,
-                GL_RED,
-                GL_UNSIGNED_BYTE, 
-                pixels 
-                );
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        // TODO where to put scale ? 
-        float scale = 1.0;
-        //float xpos = character.Bearing.x * scale; 
-        //float ypos = (character.Bearing.y - character.Size.y) * scale; 
-        float xpos = 20.0f * character.Bearing.x/character.Size.x; 
-        float ypos = 20.0f * (1.0f - character.Bearing.y/character.Size.y) ; 
-        float w = character.Size.x * scale; 
-        float h = character.Size.y * scale; 
-
-        float maxX = (xpos + w)/100; 
-        float maxY = (ypos + h)/100;
-        /*float verticesText[] = {
-          xpos/maxX, (ypos + h)/maxY , 0.0f, 0.0f, 
-          xpos/maxX, ypos/maxY, 0.0f, 1.0f, 
-          (xpos + w)/maxX, ypos/maxY, 1.0f, 1.0f, 
-
-          xpos/maxX, (ypos + h)/maxY, 0.0f, 0.0f, 
-          (xpos + w)/maxX, ypos/maxY, 1.0f, 1.0f, 
-          (xpos + w)/maxX, (ypos + h)/maxY, 1.0f, 0.0f
-          };*/
-        // TODO scale it down in the model matrix.
-        size_t nc = this->name.size(); 
-        float verticesText[] = {
-            (-10.0f * nc  + xpos)/2, (10.0f + ypos)/2, 0.0f, 0.0f, 
-            (-10.0f * nc + xpos)/2, (-10.0f + ypos)/2, 0.0f, 1.0f, 
-            (10.0f * nc + xpos)/2, (-10.0f + ypos)/2, 1.0f, 1.0f, 
-
-            (-10.0f * nc + xpos)/2, (10.0f + ypos)/2, 0.0f, 0.0f, 
-            (10.0f * nc + xpos)/2, (-10.0f + ypos)/2, 1.0f, 1.0f, 
-            (10.0f * nc + xpos)/2, (10.0f + ypos)/2, 1.0f, 0.0f
-        };
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        unsigned int VBOT; 
-        glGenVertexArrays(1, &this->VAOs[(VAOTYPE)TEXT]); 
-        glGenBuffers(1, &VBOT);
-
-        glBindVertexArray(this->VAOs[(VAOTYPE)TEXT]);
-        glBindBuffer(GL_ARRAY_BUFFER, VBOT);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(verticesText), verticesText, GL_STATIC_DRAW); 
-
-        glEnableVertexAttribArray(0); 
-        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0); 
-
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        glBindTexture(GL_TEXTURE_2D, 0);
     }
-    void Node::drawNode(Shader* shader, int maxLevel, int levelSeparation){
-        shader->use();
-        glm::mat4 model = glm::mat4(1.0f); 
-        //width = 20.0f;
-        int xFinal = this->x - this->width / 2;
-        int yFinal = this->y + this->height/ 2;
-        model = glm::translate(model, glm::vec3(xFinal, yFinal, 0.0f));
-        //model = glm::scale(model, glm::vec3(x/20.0f, x/20.0f, 1.0f));
-        int modelLoc = glGetUniformLocation(shader->ID, "model");
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-        glm::mat4 projection = glm::mat4(1.0f);
-        float yAxisProjection = (float(maxLevel * levelSeparation * 3)/4); 
-        projection = glm::ortho(-400.0f, 400.0f, -yAxisProjection, yAxisProjection , 0.0f, 10.0f); 
-        int projectionLoc = glGetUniformLocation(shader->ID, "projection");
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glBindVertexArray(this->VAOs[RECTANGLE]);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-        glBindVertexArray(this->VAOs[ARROW]); 
-        if(this->parent != NULL){
+    glTexImage2D(
+            GL_TEXTURE_2D, 
+            0,
+            GL_RED, 
+            tex_width,  
+            tex_height,
+            0,
+            GL_RED,
+            GL_UNSIGNED_BYTE, 
+            pixels 
+            );
 
-            model = glm::mat4(1.0f); 
-            model = glm::translate(model, glm::vec3(this->x - this->width / 2 , this->y + this->height, 0.0f));
-            model = glm::rotate(model, -this->arrowAngle, glm::vec3(0.0, 0.0, 1.0));
-            model = glm::scale(model, glm::vec3(this->arrowAmp/10.0f, 1.0f, 1.0f));
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // TODO where to put scale ? 
+    float scale = 1.0;
+    //float xpos = character.Bearing.x * scale; 
+    //float ypos = (character.Bearing.y - character.Size.y) * scale; 
+    float xpos = 20.0f * character.Bearing.x/character.Size.x; 
+    float ypos = 20.0f * (1.0f - character.Bearing.y/character.Size.y) ; 
+    float w = character.Size.x * scale; 
+    float h = character.Size.y * scale; 
 
-            glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-            glDrawArrays(GL_LINES, 0, 2);
-        }
+    /*float verticesText[] = {
+      xpos/maxX, (ypos + h)/maxY , 0.0f, 0.0f, 
+      xpos/maxX, ypos/maxY, 0.0f, 1.0f, 
+      (xpos + w)/maxX, ypos/maxY, 1.0f, 1.0f, 
+
+      xpos/maxX, (ypos + h)/maxY, 0.0f, 0.0f, 
+      (xpos + w)/maxX, ypos/maxY, 1.0f, 1.0f, 
+      (xpos + w)/maxX, (ypos + h)/maxY, 1.0f, 0.0f
+      };*/
+    // TODO scale it down in the model matrix.
+    size_t nc = this->name.size(); 
+    float verticesText[] = {
+        (-10.0f * nc  + xpos)/2, (10.0f + ypos)/2, 0.0f, 0.0f, 
+        (-10.0f * nc + xpos)/2, (-10.0f + ypos)/2, 0.0f, 1.0f, 
+        (10.0f * nc + xpos)/2, (-10.0f + ypos)/2, 1.0f, 1.0f, 
+
+        (-10.0f * nc + xpos)/2, (10.0f + ypos)/2, 0.0f, 0.0f, 
+        (10.0f * nc + xpos)/2, (-10.0f + ypos)/2, 1.0f, 1.0f, 
+        (10.0f * nc + xpos)/2, (10.0f + ypos)/2, 1.0f, 0.0f
+    };
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    unsigned int VBOT; 
+    glGenVertexArrays(1, &this->VAOs[(VAOTYPE)TEXT]); 
+    glGenBuffers(1, &VBOT);
+
+    glBindVertexArray(this->VAOs[(VAOTYPE)TEXT]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBOT);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(verticesText), verticesText, GL_STATIC_DRAW); 
+
+    glEnableVertexAttribArray(0); 
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0); 
 
 
-        std::cout << "RENDERTEXT:1::" << glGetError() << std::endl;
-        this->font->shader->use();
-        glBindVertexArray(this->VAOs[TEXT]); 
-        modelLoc = glGetUniformLocation(this->font->shader->ID, "model");
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+void Node::drawNode(Shader* shader, Node* root,  int maxLevel, int levelSeparation){
+    shader->use();
+    glm::mat4 model = glm::mat4(1.0f); 
+    //width = 20.0f;
+    int xFinal = this->x - this->width / 2;
+    int yFinal = this->y + this->height/ 2;
+    model = glm::translate(model, glm::vec3(xFinal, yFinal, 0.0f));
+    //model = glm::scale(model, glm::vec3(x/20.0f, x/20.0f, 1.0f));
+    int modelLoc = glGetUniformLocation(shader->ID, "model");
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    glm::mat4 projection = glm::mat4(1.0f);
+    float yAxisProjection = root->y * 3/2;  
+    std::cout << "yAxis : +/-" << yAxisProjection << " , level sep = "<< levelSeparation << ", maxlevel = " << maxLevel << std::endl; 
+    projection = glm::ortho(-400.0f, 400.0f, yAxisProjection - (maxLevel + 1) * (levelSeparation + 20.0f), yAxisProjection , 0.0f, 10.0f); 
+    int projectionLoc = glGetUniformLocation(shader->ID, "projection");
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glBindVertexArray(this->VAOs[RECTANGLE]);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    glBindVertexArray(this->VAOs[ARROW]); 
+    if(this->parent != NULL){
+
         model = glm::mat4(1.0f); 
-        model = glm::translate(model, glm::vec3(xFinal, yFinal, 0.0f));
+        model = glm::translate(model, glm::vec3(this->x - this->width / 2 , this->y + this->height, 0.0f));
+        model = glm::rotate(model, -this->arrowAngle, glm::vec3(0.0, 0.0, 1.0));
+        model = glm::scale(model, glm::vec3(this->arrowAmp/10.0f, 1.0f, 1.0f));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-        projectionLoc = glGetUniformLocation(this->font->shader->ID, "projection");
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-        std::cout << "RENDERTEXT:2::" << glGetError() << std::endl;
-        std::cout << "RENDERTEXT:3::" << glGetError() << std::endl;
-        glBindTexture(GL_TEXTURE_2D, this->texture); 
-        std::cout << "RENDERTEXT:4::" << glGetError() << std::endl;
-        glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        std::cout << "RENDERTEXT:5::" << glGetError() << std::endl;
-        glBindVertexArray(0);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+        glDrawArrays(GL_LINES, 0, 2);
     }
+
+
+    std::cout << "RENDERTEXT:1::" << glGetError() << std::endl;
+    this->font->shader->use();
+    glBindVertexArray(this->VAOs[TEXT]); 
+    modelLoc = glGetUniformLocation(this->font->shader->ID, "model");
+    model = glm::mat4(1.0f); 
+    model = glm::translate(model, glm::vec3(xFinal, yFinal, 0.0f));
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    projectionLoc = glGetUniformLocation(this->font->shader->ID, "projection");
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    std::cout << "RENDERTEXT:2::" << glGetError() << std::endl;
+    std::cout << "RENDERTEXT:3::" << glGetError() << std::endl;
+    glBindTexture(GL_TEXTURE_2D, this->texture); 
+    std::cout << "RENDERTEXT:4::" << glGetError() << std::endl;
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    std::cout << "RENDERTEXT:5::" << glGetError() << std::endl;
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
 
