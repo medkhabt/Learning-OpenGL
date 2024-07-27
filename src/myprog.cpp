@@ -124,9 +124,12 @@ int main() {
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
+    int widthWindow, heightWindow;
+    int resolutionLoc, timeValueLoc; 
     // RENDER
     while(!glfwWindowShouldClose(window)){
 
+        glfwGetWindowSize(window, &widthWindow, &heightWindow);
         processInput(window); 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -134,6 +137,10 @@ int main() {
 
         VAOT = buildRectangle();
         textureShader.use();
+        resolutionLoc = glGetUniformLocation(textureShader.ID, "resolution");
+        glUniform2f(resolutionLoc, widthWindow, heightWindow);
+        timeValueLoc = glGetUniformLocation(textureShader.ID, "timeValue");
+        glUniform1f(timeValueLoc, glfwGetTime());
         //glBindTexture(GL_TEXTURE_2D, texture); 
         glBindVertexArray(VAOT);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
