@@ -23,6 +23,7 @@ class Node {
         Node* leftNeighbor = NULL; 
         unsigned int texture;  
         float width; 
+        float height;
         float x; 
         float y; 
         float arrowAmp; 
@@ -31,7 +32,8 @@ class Node {
         float modifier; 
 
         Node(Node* parent, std::string name, float x, float y, Font* f):  name(name), parent(parent), x(x), y(y), font(f) {
-            this->width = 20.0f;
+            this->width = 20.0f + 20.0f * name.size() / 5 ; // ((log(name.size()) / log(2))  - 1);
+            this->height = 20.0f;
             if(parent != NULL){
                 if(parent->firstChild == NULL){
                     parent->firstChild = this; 

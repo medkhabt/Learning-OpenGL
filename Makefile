@@ -5,8 +5,10 @@ CPP_SRC=$(wildcard src/*.cpp)
 CPP_TST=$(wildcard tests/*.cpp)
 
 # I shouldn't forget about the debugging flag. 
-CFLAGS=-Wall -g
-CPPFLAGS= -std=c++11 -Wall -g
+CFLAGS=-Wall 
+CDEBUG=-lprofiler -g
+CPPFLAGS= -std=c++11 -Wall 
+CPPDEBUG= -O0 -lprofiler -g
 
 
 LIBS=-lglfw -framework Cocoa -framework OpenGL -framework IOKit -lfreetype
@@ -21,17 +23,16 @@ default: all
 all: clean run 
 
 %.o: %.c 
-	clang $(CFLAGS) $(INC) -c $< -o $@
+	clang   $(CFLAGS)  $(INC) -c $< -o $@
 
-%.o: %.cpp 
-	clang++ $(CPPFLAGS) $(INC) -c $< -o $@
+profile : $(C_OBJS)
+	clang++ $(CPPFLAGS) $(CPPDEBUG) $(INC) -o myprog $(C_OBJS) $(CPP_SRC) $(LIBS) 
 
+build : $(C_OBJS)
+	clang++ $(CPPFLAGS) -O3 $(INC) -o myprog $(C_OBJS) $(CPP_SRC) $(LIBS)
 
-build : $(C_OBJS) $(CPP_OBJS) 
-	clang++ $(CPPFLAGS) -o myprog $(C_OBJS) $(CPP_OBJS) $(LIBS) 
-
-build_test: $(C_OBJS) $(CPP_TST_OBJS) 
-	clang++ $(CPPFLAGS) -o mytest $(C_OBJS) $(CPP_TST_OBJS) $(LIBS) 
+build_test: $(C_OBJS)
+	clang++ $(CPPFLAGS) $(INC) -o mytest $(C_OBJS) $(CPP_TST) $(SRC) 
 
 run : build 
 	./myprog

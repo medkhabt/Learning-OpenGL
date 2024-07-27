@@ -68,7 +68,7 @@ class Tree {
             } else {
                 Node* rightMost = node->firstChild; 
                 Node* leftMost = getLeftMost(rightMost, level + 1, depth) ;
-                while(leftMost != NULL && rightMost->hasRightSibling()){
+                while(leftMost == NULL && rightMost->hasRightSibling()){
                     rightMost = rightMost->rightSibling; 
                     leftMost = getLeftMost(rightMost, level + 1, depth) ;
                 }
@@ -110,12 +110,12 @@ class Tree {
                     if(tempPtr != NULL){
                         float portion = moveDistance / leftSiblings;  
                         tempPtr = node; 
-                        while(tempPtr == ancestorNeighbor) {
+                        do {
                             tempPtr->prelimX += moveDistance; 
                             tempPtr->modifier += moveDistance; 
                             moveDistance -= portion; 
                             tempPtr = tempPtr->leftSibling;  
-                        }
+                        }while(tempPtr == ancestorNeighbor);
                     } else {
                         return;  
                     }
@@ -183,7 +183,7 @@ class Tree {
                 node->y = yTemp; 
                 std::cout << "Node " << node->name << " :(" << node->x << "," << node->y << ") and Amplitude is " << node->arrowAmp << " and angle is " << node->arrowAngle* 360 / (2 * M_PI) <<std::endl;
                 if(node->parent !=NULL){
-                    node->arrowAmp= sqrt(pow(node->x - node->parent->x, 2) + pow(node->y - node->parent->y + node->width, 2));
+                    node->arrowAmp= sqrt(pow(node->x - node->parent->x, 2) + pow(node->y - node->parent->y + node->height, 2));
                     node->arrowAngle= acos((node->x - node->parent->x) / node->arrowAmp); 
                 }
 
