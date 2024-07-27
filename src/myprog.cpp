@@ -1,6 +1,9 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <csignal>
+#include <cstdlib>
+#include <unistd.h>
 #include <math.h>
 #include <glm/glm.hpp> 
 #include <glm/gtc/matrix_transform.hpp>
@@ -18,8 +21,15 @@ void processInput(GLFWwindow *window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height); 
 void drawNode(int position, int level, int maxVertexesPerLevel, unsigned int shaderID, unsigned int shapeID);
 unsigned int buildRectangle(); 
-
+volatile std::sig_atomic_t stop;
+void handle_signal(int signal) {
+    if (signal == SIGINT) {
+        std::cout << "Interrupt signal received. Cleaning up..." << std::endl;
+        stop = 1;
+    }
+}
 int main() {
+    std::signal(SIGINT, handle_signal);
     glfwInit(); 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); 
@@ -45,34 +55,36 @@ int main() {
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nAttributes);
     std::cout << "Maximum nr of vertex attributes supported: " << nAttributes << std::endl;
 
+    Shader fontShader("./src/shaders/textShader.vs", "./src/shaders/textShader.fs");
+    Font* font = new Font(&fontShader); 
 
 
-    Node* s = new Node(NULL, "S", 0, 200); 
-    Node* a = new Node(s, "A", 0, 0); 
-    Node* a1 = new Node(a, "A1", 0, 0); 
-    Node* a2 = new Node(a, "A2", 0, 0); 
-    Node* b = new Node(s, "B", 0, 0); 
-    Node* b1 = new Node(b, "B1", 0, 0); 
-    Node* b2 = new Node(b, "B2", 0, 0); 
-    Node* c = new Node(s, "C", 0, 0); 
-    Node* c1 = new Node(c, "C1", 0, 0); 
-    Node* c2 = new Node(c, "C2", 0, 0); 
-    Node* c3 = new Node(c, "C3", 0, 0); 
-    Node* c11 = new Node(c1, "C11", 0, 0); 
-    Node* c12 = new Node(c1, "C12", 0, 0); 
-    Node* c13 = new Node(c1, "C13", 0, 0); 
-    Node* c14 = new Node(c1, "C14", 0, 0); 
-    Node* c141 = new Node(c14, "C141", 0, 0); 
-    Node* c1411 = new Node(c141, "C1411", 0, 0); 
-    Node* c1412 = new Node(c141, "C1412", 0, 0); 
-    Node* c1413 = new Node(c141, "C1413", 0, 0); 
-    Node* c1414 = new Node(c141, "C1414", 0, 0); 
-    Node* c1415 = new Node(c141, "C1415", 0, 0); 
-    Node* c142 = new Node(c14, "C142", 0, 0); 
-    Node* d = new Node(s, "D", 0, 0); 
-    Node* e = new Node(s, "E", 0, 0); 
-    Node* f = new Node(s, "F", 0, 0); 
-    Node* g = new Node(s, "G", 0, 0); 
+    Node* s = new Node(NULL, "S", 0, 200, font); 
+    Node* a = new Node(s, "A", 0, 0, font); 
+    Node* a1 = new Node(a, "A1", 0, 0, font); 
+    Node* a2 = new Node(a, "A2", 0, 0, font); 
+    Node* b = new Node(s, "B", 0, 0, font); 
+    Node* b1 = new Node(b, "B1", 0, 0, font); 
+    Node* b2 = new Node(b, "B2", 0, 0, font); 
+    Node* c = new Node(s, "C", 0, 0, font); 
+    Node* c1 = new Node(c, "C1", 0, 0, font); 
+    Node* c2 = new Node(c, "C2", 0, 0, font); 
+    Node* c3 = new Node(c, "C3", 0, 0, font); 
+    Node* c11 = new Node(c1, "C11", 0, 0, font); 
+    Node* c12 = new Node(c1, "C12", 0, 0, font); 
+    Node* c13 = new Node(c1, "C13", 0, 0, font); 
+    Node* c14 = new Node(c1, "C14", 0, 0, font); 
+    Node* c141 = new Node(c14, "C141", 0, 0, font); 
+    Node* c1411 = new Node(c141, "C1411", 0, 0, font); 
+    Node* c1412 = new Node(c141, "C1412", 0, 0, font); 
+    Node* c1413 = new Node(c141, "C1413", 0, 0, font); 
+    Node* c1414 = new Node(c141, "C1414", 0, 0, font); 
+    Node* c1415 = new Node(c141, "C1415", 0, 0, font); 
+    Node* c142 = new Node(c14, "C142", 0, 0, font); 
+    Node* d = new Node(s, "D", 0, 0, font); 
+    Node* e = new Node(s, "E", 0, 0, font); 
+    Node* f = new Node(s, "F", 0, 0, font); 
+    Node* g = new Node(s, "G", 0, 0, font); 
 
     std::cout << "TEST file:: Creating tree" << std::endl;
     Shader treeShader("./src/shaders/treeShader.vs", "./src/shaders/treeShader.fs");
@@ -82,10 +94,8 @@ int main() {
 
 
 
-    Shader fontShader("./src/shaders/textShader.vs", "./src/shaders/textShader.fs");
     Shader textureShader("./src/shaders/textureShader.vs", "./src/shaders/textureShader.fs");
 
-    Font* font = new Font(&fontShader); 
 
     // TEXTURE 
 
@@ -129,14 +139,17 @@ int main() {
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         t->drawTree();
-        font->renderText("C1415", 60.0f - 10.0f, -100.0f + 10.0f, 0.2f, glm::vec3(0.5f, 0.8f, 0.2f));
-        font->renderText("C11", -210.0f - 10.0f, 20.0f + 10.0f, 0.2f, glm::vec3(0.5f, 0.8f, 0.2f));
-        font->renderText("A2", -150.0f - 10.0f , 80.0f + 10.0f , 0.2f, glm::vec3(0.5f, 0.8f, 0.2f));
-        font->renderText("A", -180.0f- 10.0f, 140.0f + 10.0f, 0.2f, glm::vec3(0.5f, 0.8f, 0.2f));
+        //font->renderText("C1415", 60.0f - 10.0f, -100.0f + 10.0f, 0.2f, glm::vec3(0.5f, 0.8f, 0.2f));
+        //font->renderText("C11", -210.0f - 10.0f, 20.0f + 10.0f, 0.2f, glm::vec3(0.5f, 0.8f, 0.2f));
+        //font->renderText("A2", -150.0f - 10.0f , 80.0f + 10.0f , 0.2f, glm::vec3(0.5f, 0.8f, 0.2f));
+        //font->renderText("A", -180.0f- 10.0f, 140.0f + 10.0f, 0.2f, glm::vec3(0.5f, 0.8f, 0.2f));
         //font->renderText("(C) Medkha.com", 540.0f, 570.0f, 0.5f, glm::vec3(0.3f, 0.7f, 0.9f));
 
         glfwSwapBuffers(window);  
         glfwPollEvents();
+        if(stop){
+            return 0;  
+        }
     }
     t->deleteAll();
     // TODO how to delete the buffers dynamically ? 

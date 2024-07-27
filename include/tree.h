@@ -68,7 +68,7 @@ class Tree {
             } else {
                 Node* rightMost = node->firstChild; 
                 Node* leftMost = getLeftMost(rightMost, level + 1, depth) ;
-                while(leftMost != NULL && rightMost->hasRightSibling()){
+                while(leftMost == NULL && rightMost->hasRightSibling()){
                     rightMost = rightMost->rightSibling; 
                     leftMost = getLeftMost(rightMost, level + 1, depth) ;
                 }
@@ -110,12 +110,12 @@ class Tree {
                     if(tempPtr != NULL){
                         float portion = moveDistance / leftSiblings;  
                         tempPtr = node; 
-                        while(tempPtr == ancestorNeighbor) {
+                        do {
                             tempPtr->prelimX += moveDistance; 
                             tempPtr->modifier += moveDistance; 
                             moveDistance -= portion; 
                             tempPtr = tempPtr->leftSibling;  
-                        }
+                        }while(tempPtr == ancestorNeighbor);
                     } else {
                         return;  
                     }
@@ -181,9 +181,10 @@ class Tree {
             if (checkextentsrange(xTemp, yTemp)){
                 node->x = xTemp;  
                 node->y = yTemp; 
+                node->buildNode();
                 std::cout << "Node " << node->name << " :(" << node->x << "," << node->y << ") and Amplitude is " << node->arrowAmp << " and angle is " << node->arrowAngle* 360 / (2 * M_PI) <<std::endl;
                 if(node->parent !=NULL){
-                    node->arrowAmp= sqrt(pow(node->x - node->parent->x, 2) + pow(node->y - node->parent->y + node->width, 2));
+                    node->arrowAmp= sqrt(pow(node->x - node->parent->x, 2) + pow(node->y - node->parent->y + node->height, 2));
                     node->arrowAngle= acos((node->x - node->parent->x) / node->arrowAmp); 
                 }
 
@@ -231,7 +232,7 @@ class Tree {
                 currNode = visited.front(); 
                 sibling = currNode;
                 visited.pop();
-                drawNode(currNode); 
+                currNode->drawNode(this->shader, this->maxLevel, this->levelSeparation); 
                 if(currNode->parent != NULL && currNode == currNode->parent->firstChild){
                     while(sibling->hasRightSibling()){
                         visited.push(sibling->rightSibling);
@@ -243,37 +244,38 @@ class Tree {
                 }
             }
         }
-        void drawNode(Node* node){
-            glm::mat4 model = glm::mat4(1.0f); 
-            //width = 20.0f;
-            int xFinal = node->x - node->width / 2;
-            int yFinal = node->y + node->width / 2;
-            model = glm::translate(model, glm::vec3(xFinal, yFinal, 0.0f));
-            //model = glm::scale(model, glm::vec3(x/20.0f, x/20.0f, 1.0f));
-            int modelLoc = glGetUniformLocation(shader->ID, "model");
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-            glm::mat4 projection = glm::mat4(1.0f);
-            float yAxisProjection = (float(this->maxLevel * this->levelSeparation * 3)/4); 
-            projection = glm::ortho(-400.0f, 400.0f, -yAxisProjection, yAxisProjection , 0.0f, 10.0f); 
-            int projectionLoc = glGetUniformLocation(shader->ID, "projection");
-            glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-            //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glBindVertexArray(this->vaoRectangleId);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        /*        void drawNode(Node* node){
+                  glm::mat4 model = glm::mat4(1.0f); 
+        //width = 20.0f;
+        int xFinal = node->x - node->width / 2;
+        int yFinal = node->y + node->width / 2;
+        model = glm::translate(model, glm::vec3(xFinal, yFinal, 0.0f));
+        //model = glm::scale(model, glm::vec3(x/20.0f, x/20.0f, 1.0f));
+        int modelLoc = glGetUniformLocation(shader->ID, "model");
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        glm::mat4 projection = glm::mat4(1.0f);
+        float yAxisProjection = (float(this->maxLevel * this->levelSeparation * 3)/4); 
+        projection = glm::ortho(-400.0f, 400.0f, -yAxisProjection, yAxisProjection , 0.0f, 10.0f); 
+        int projectionLoc = glGetUniformLocation(shader->ID, "projection");
+        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glBindVertexArray(this->vaoRectangleId);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-            glBindVertexArray(this->vaoArrowId); 
-            if(node->parent != NULL){
+        glBindVertexArray(this->vaoArrowId); 
+        if(node->parent != NULL){
 
-                model = glm::mat4(1.0f); 
-                model = glm::translate(model, glm::vec3(node->x - node->width / 2 , node->y + node->width, 0.0f));
-                model = glm::rotate(model, -node->arrowAngle, glm::vec3(0.0, 0.0, 1.0));
-                model = glm::scale(model, glm::vec3(node->arrowAmp/10.0f, 1.0f, 1.0f));
-                glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        model = glm::mat4(1.0f); 
+        model = glm::translate(model, glm::vec3(node->x - node->width / 2 , node->y + node->width, 0.0f));
+        model = glm::rotate(model, -node->arrowAngle, glm::vec3(0.0, 0.0, 1.0));
+        model = glm::scale(model, glm::vec3(node->arrowAmp/10.0f, 1.0f, 1.0f));
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-                glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-                glDrawArrays(GL_LINES, 0, 2);
-            }
+        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+        glDrawArrays(GL_LINES, 0, 2);
         }
+        }
+        */
         unsigned int buildRectangle(float width) {
             // Addind the spacing in the calculation ( half of the node width )
             width = width/2;
