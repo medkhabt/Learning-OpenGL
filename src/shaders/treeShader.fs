@@ -8,5 +8,5 @@ void main() {
     d -= 0.5f; 
     d = abs(d);
     d = smoothstep(0.0, 0.1, d);
-    FragColor = vec4(1.0, 0.0f, 0.0f, 1.0f);
+    FragColor = vec4(216.0f/255, 167.0f/255, 202.0f/255, 1.0f);
 }

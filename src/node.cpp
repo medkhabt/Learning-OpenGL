@@ -2,6 +2,9 @@
 #include <map>
 #include <font.h>
 
+glm::vec2 Node::bernsteinPoly(float t, glm::vec2 p0, glm::vec2 p1, glm::vec2 p2){
+    return (- t * t - t) * p0 + (-2 * t*t + 2*t) * p1 + t * t * p2; 
+}
 void Node::buildNode() {
     // Addind the spacing in the calculation ( half of the node width )
     // ------ BUILDING RECTANGLE --------
@@ -47,12 +50,31 @@ void Node::buildNode() {
     glEnableVertexAttribArray(0); 
     std::cout << "10-" << "glgeterror:" <<glGetError() << std::endl;
     // ------- BUILDING THE ARROW ----------
+    //model = glm::translate(model, glm::vec3(this->x - this->width / 2 , this->y + this->height, 0.0f));
+    //model = glm::rotate(model, -this->arrowAngle, glm::vec3(0.0, 0.0, 1.0));
+    //model = glm::scale(model, glm::vec3(this->arrowAmp/10.0f, 1.0f, 1.0f));
+    // I could just normalize the coordnates.., but i also didn't centralize the variable defining the width and height of the camera/world(for now they are the same). 
+    std::cout << "the angle is in the buidling section : " << this->arrowAngle << std::endl;
+    glm::vec2 parentCoord(10.0f * cos( this->arrowAngle),  10.0f * sin( this->arrowAngle)); 
+    std::cout << "parent coord (" << parentCoord.x << "," << parentCoord.y << ")" << std::endl;
+    glm::vec2 inmiddle; 
+    float verticesArrow[20*3]; 
+    for (size_t t = 0; t < 20; t++){
+        inmiddle = Node::bernsteinPoly(t*0.05, glm::vec2(0.0f, 0.0f), glm::vec2(0.7 * parentCoord.x, parentCoord.y * 0.5f), parentCoord );  
+        verticesArrow[t*3] = inmiddle.x;
+        verticesArrow[t*3 + 1] = inmiddle.y;
+        verticesArrow[t*3 + 2] = 0.0f;
 
-    float verticesArrow[] = {
-        0.0f, 0.0f, 0.0f,
-        -10.0f, 0.0f, 0.0f, 
+    }
+    //glm::vec2 inmiddle = Node::bernsteinPoly(0.5, parentCoord, glm::vec2(0.0f, parentCoord.y), glm::vec2(0.0f, 0.0f));
 
-    }; 
+
+    std::cout << "in middle is (" << inmiddle.x << "," << inmiddle.y << ")" << std::endl;
+    //float verticesArrow[] = {
+    //0.0f, 0.0f, 0.0f,
+    //inmiddle.x, inmiddle.y, 0.0f, 
+    //parentCoord.x, parentCoord.y, 0.0f, 
+    //}; 
     unsigned int VBOA;
     glGenVertexArrays(1, &this->VAOs[(VAOTYPE)ARROW]); 
     glGenBuffers(1, &VBOA);
@@ -212,7 +234,7 @@ void Node::drawNode(Shader* shader, Node* root,  int maxLevel, int levelSeparati
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     glm::mat4 projection = glm::mat4(1.0f);
     float yAxisProjection = root->y * 3/2;  
-    std::cout << "yAxis : +/-" << yAxisProjection << " , level sep = "<< levelSeparation << ", maxlevel = " << maxLevel << std::endl; 
+    //std::cout << "yAxis : +/-" << yAxisProjection << " , level sep = "<< levelSeparation << ", maxlevel = " << maxLevel << std::endl; 
     projection = glm::ortho(-400.0f, 400.0f, yAxisProjection - (maxLevel + 1) * (levelSeparation + 20.0f), yAxisProjection , 0.0f, 10.0f); 
     int projectionLoc = glGetUniformLocation(shader->ID, "projection");
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
@@ -225,16 +247,17 @@ void Node::drawNode(Shader* shader, Node* root,  int maxLevel, int levelSeparati
 
         model = glm::mat4(1.0f); 
         model = glm::translate(model, glm::vec3(this->x - this->width / 2 , this->y + this->height, 0.0f));
-        model = glm::rotate(model, -this->arrowAngle, glm::vec3(0.0, 0.0, 1.0));
-        model = glm::scale(model, glm::vec3(this->arrowAmp/10.0f, 1.0f, 1.0f));
+        //model = glm::rotate(model, this->arrowAngle, glm::vec3(0.0, 0.0, 1.0));
+        model = glm::scale(model, glm::vec3(this->arrowAmp/10.0f, this->arrowAmp/10.0f, 1.0f));
+        //model = glm::scale(model, glm::vec3(this->arrowAmp, 1.0f, 1.0f));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-        glDrawArrays(GL_LINES, 0, 2);
+        glDrawArrays(GL_LINE_STRIP, 0, 20);
     }
 
 
-    std::cout << "RENDERTEXT:1::" << glGetError() << std::endl;
+    //std::cout << "RENDERTEXT:1::" << glGetError() << std::endl;
     this->font->shader->use();
     glBindVertexArray(this->VAOs[TEXT]); 
     modelLoc = glGetUniformLocation(this->font->shader->ID, "model");
@@ -243,13 +266,13 @@ void Node::drawNode(Shader* shader, Node* root,  int maxLevel, int levelSeparati
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     projectionLoc = glGetUniformLocation(this->font->shader->ID, "projection");
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-    std::cout << "RENDERTEXT:2::" << glGetError() << std::endl;
-    std::cout << "RENDERTEXT:3::" << glGetError() << std::endl;
+    //std::cout << "RENDERTEXT:2::" << glGetError() << std::endl;
+    //std::cout << "RENDERTEXT:3::" << glGetError() << std::endl;
     glBindTexture(GL_TEXTURE_2D, this->texture); 
-    std::cout << "RENDERTEXT:4::" << glGetError() << std::endl;
+    //std::cout << "RENDERTEXT:4::" << glGetError() << std::endl;
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    std::cout << "RENDERTEXT:5::" << glGetError() << std::endl;
+    //std::cout << "RENDERTEXT:5::" << glGetError() << std::endl;
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
 }

@@ -48,6 +48,7 @@ class Node {
                 }
             }
         }
+        glm::vec2 bernsteinPoly(float t, glm::vec2 p0, glm::vec2 p1, glm::vec2 p2);
         //TODO specify the width on the constructor.
         void buildNode(); 
         void drawNode(Shader* shader, Node* root, int maxLevel, int levelSeparation);

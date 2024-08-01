@@ -181,13 +181,13 @@ class Tree {
             if (checkextentsrange(xTemp, yTemp)){
                 node->x = xTemp;  
                 node->y = yTemp; 
-                node->buildNode();
-                std::cout << "Node " << node->name << " :(" << node->x << "," << node->y << ") and Amplitude is " << node->arrowAmp << " and angle is " << node->arrowAngle* 360 / (2 * M_PI) <<std::endl;
                 if(node->parent !=NULL){
                     node->arrowAmp= sqrt(pow(node->x - node->parent->x, 2) + pow(node->y - node->parent->y + node->height, 2));
-                    node->arrowAngle= acos((node->x - node->parent->x) / node->arrowAmp); 
+                    node->arrowAngle= acos(( node->parent->x - node->x) / node->arrowAmp); 
                 }
 
+                node->buildNode();
+                std::cout << "Node " << node->name << " :(" << node->x << "," << node->y << ") and Amplitude is " << node->arrowAmp << " and angle is " << node->arrowAngle* 360 / (2 * M_PI) <<std::endl;
                 this->maxLevel = (this->maxLevel < level) ? level : this->maxLevel;
                 if (node->hasChild()){
                     result = secondWalk(node->firstChild, level + 1, modSum + node->modifier); 

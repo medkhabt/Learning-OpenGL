@@ -125,7 +125,7 @@ int main() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     int widthWindow, heightWindow;
-    int resolutionLoc, timeValueLoc; 
+    int resolutionLoc, timeValueLoc, rootLoc ; 
     // RENDER
     while(!glfwWindowShouldClose(window)){
 
@@ -141,6 +141,12 @@ int main() {
         glUniform2f(resolutionLoc, widthWindow, heightWindow);
         timeValueLoc = glGetUniformLocation(textureShader.ID, "timeValue");
         glUniform1f(timeValueLoc, glfwGetTime());
+        rootLoc = glGetUniformLocation(textureShader.ID, "rootCrd");
+        float k = (t->maxLevel + 1) * (t->levelSeparation + 20.0f)/2; 
+        float temp = (float)(t->root->y - 5.0f)/k; 
+        //std::cout << "temp =  " << temp << " and on x is " << (float)(t->root->x)/400  << std::endl;
+        glUniform2f(rootLoc, (float)(t->root->x -6.0f) / 400, (float)temp);
+
         //glBindTexture(GL_TEXTURE_2D, texture); 
         glBindVertexArray(VAOT);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
