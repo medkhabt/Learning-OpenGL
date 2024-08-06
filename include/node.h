@@ -21,6 +21,7 @@ class Node {
         Node* leftSibling = NULL; 
         Node* rightSibling = NULL; 
         Node* leftNeighbor = NULL; 
+        Font* font;  
         unsigned int texture;  
         float width; 
         float height;
@@ -49,9 +50,10 @@ class Node {
             }
         }
         glm::vec2 bernsteinPoly(float t, glm::vec2 p0, glm::vec2 p1, glm::vec2 p2);
+        glm::vec2 bernsteinPolyQuadraticCurve(float t, glm::vec2 p0, glm::vec2 p1, glm::vec2 p2, glm::vec2 p3);
         //TODO specify the width on the constructor.
         void buildNode(); 
-        void drawNode(Shader* shader, Node* root, int maxLevel, int levelSeparation);
+        void drawNode(Shader* shader, Node* root, float* canvas);
         // TODO DELETE all the subtree of the node.
         bool isLeaf(){
             return this->firstChild == NULL; 
@@ -67,7 +69,6 @@ class Node {
         }
     private : 
         unsigned int VAOs[3];  
-        Font* font;  
 
 };
 #endif 

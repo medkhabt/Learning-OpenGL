@@ -9,6 +9,11 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "node.h"
 #include "shader.h"
+enum ZOOM{ 
+    NO = 0,
+    IN, 
+    OUT 
+};
 class Tree {
     public : 
         Shader* shader; 
@@ -21,10 +26,12 @@ class Tree {
         float yTopAdjustment; 
         unsigned int maxLevel; 
         unsigned int levelSeparation;
+        float canvas[4]; 
+        int zoomCoeff; 
+        int zoomCoeffBefore;
         std::vector<Node*> prevNode; 
         float* pRootY; 
-
-
+        float t; 
 
         std::vector<int> levels; 
 
@@ -34,6 +41,9 @@ class Tree {
             this->pRootY = &root->y;
             this->vaoRectangleId = buildRectangle(root->width);  
             this->vaoArrowId = buildArrow();
+            this->t = 1.0f; 
+            this->zoomCoeff = 0; 
+            this->zoomCoeffBefore= 0; 
         }
         // TODO implememnt this
         unsigned int getMaxVertexesInLevel(){
@@ -213,7 +223,13 @@ class Tree {
                 this->yTopAdjustment = this->root->y;
 
                 std::cout << "TREE.H:: execute first secondWalk" << std::endl;
-                return secondWalk(this->root, 0, 0);
+                secondWalk(this->root, 0, 0);
+                float yAxisProjection = this->root->y * 3/2;  
+                this->canvas[0] = -400.0f;
+                this->canvas[1] =  400.0f; 
+                this->canvas[2] = yAxisProjection - (this->maxLevel + 1) * (this->levelSeparation + 20.0f); 
+                this->canvas[3] =  yAxisProjection; 
+                return true;
 
             } else {
                 return true; 
@@ -222,17 +238,53 @@ class Tree {
 
         // ******************* END WALKER ALGO ***********************************
 
-        void drawTree() {
+        void drawTree(ZOOM zoom) {
             std::queue<Node*> visited;  
             Node* currNode = this->root;
             Node* sibling;
             visited.push(currNode);
             this->shader->use(); 
+            int zoomLoc, zoomTextLoc, treeAnimationLoc;
+            glm::mat4 zoomVal = glm::mat4(1.0f); 
+            glm::mat4 treeAnimationVal = glm::mat4(1.0f);
+
+            zoomLoc = glGetUniformLocation(this->shader->ID, "zoom");
+            zoomTextLoc = glGetUniformLocation(this->root->font->shader->ID, "zoom");
+            treeAnimationLoc = glGetUniformLocation(this->shader->ID, "treeAnimation");
+
+            if( t < 1.0f ){
+                t += 0.05f; 
+            }
+            if(zoom == IN && this->zoomCoeff < 5) {
+                this->zoomCoeffBefore = this->zoomCoeff++;
+                t = 0.0f; 
+            }else if(zoom == OUT && this->zoomCoeff > -3) {
+                this->zoomCoeffBefore = this->zoomCoeff--; 
+                t = 0.0f;
+            }
+            //float zoomVal = pow(0.9, this->zoomCoeff); 
+            //float zoomT = (1.0f - t ) * (1.0f + 0.1 * this->zoomCoeffBefore ) + t * ( 1.0f + 0.1 * this->zoomCoeff); 
+            float zoomT = (3*t*t - 2*t*t*t )* (1.0f + 0.3 * this->zoomCoeff) + (1.0f - (3*t*t - 2*t*t*t) ) *(1.0f + 0.3 * this->zoomCoeffBefore) ; 
+            float animTree = (3*t*t - 2*t*t*t);
+            if(t < 1.0f) {
+                std::cout << "t is " << t  << " , zoom is : " << zoomT << ", zoomCoeff :"<< this->zoomCoeff << ", zoomBeforeCoef: " << this->zoomCoeffBefore <<std::endl;
+            }
+            //std::cout << "first part : " << (1.0f - t) * pow(0.9, this->zoomCoeff - 1) << " , second part : " << t * pow(0.9, this->zoomCoeff)<< std::endl;
+            zoomVal[0].x =  zoomT; 
+            zoomVal[1].y = zoomT; 
+            treeAnimationVal[0].x = animTree; 
+            treeAnimationVal[1].y = animTree; 
+            glUniformMatrix4fv(zoomLoc, 1, GL_FALSE, glm::value_ptr(zoomVal));
+            glUniformMatrix4fv(treeAnimationLoc, 1, GL_FALSE, glm::value_ptr(treeAnimationVal));
+            // ! this could be pain in the ass to debug, as i wouldn't expect that the tree work on the text in a different shader that the other objects
+            this->root->font->shader->use();
+            glUniformMatrix4fv(zoomTextLoc, 1, GL_FALSE, glm::value_ptr(zoomVal));
+            this->shader->use(); 
             while(!visited.empty()){
                 currNode = visited.front(); 
                 sibling = currNode;
                 visited.pop();
-                currNode->drawNode(this->shader, this->root, this->maxLevel, this->levelSeparation); 
+                currNode->drawNode(this->shader, this->root, this->canvas); 
                 if(currNode->parent != NULL && currNode == currNode->parent->firstChild){
                     while(sibling->hasRightSibling()){
                         visited.push(sibling->rightSibling);

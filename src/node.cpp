@@ -5,6 +5,9 @@
 glm::vec2 Node::bernsteinPoly(float t, glm::vec2 p0, glm::vec2 p1, glm::vec2 p2){
     return (- t * t - t) * p0 + (-2 * t*t + 2*t) * p1 + t * t * p2; 
 }
+glm::vec2 Node::bernsteinPolyQuadraticCurve(float t, glm::vec2 p0, glm::vec2 p1, glm::vec2 p2, glm::vec2 p3){
+    return (-t*t*t+3*t*t-3*t+1) * p0 + (3*t*t*t-6*t*t+3*t) * p1 + (-3*t*t*t+3*t*t) * p2 + t*t*t * p3;
+}
 void Node::buildNode() {
     // Addind the spacing in the calculation ( half of the node width )
     // ------ BUILDING RECTANGLE --------
@@ -49,6 +52,11 @@ void Node::buildNode() {
     std::cout << "9-" << glGetError() << std::endl;
     glEnableVertexAttribArray(0); 
     std::cout << "10-" << "glgeterror:" <<glGetError() << std::endl;
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glDeleteBuffers(1, &VBO);
+
     // ------- BUILDING THE ARROW ----------
     //model = glm::translate(model, glm::vec3(this->x - this->width / 2 , this->y + this->height, 0.0f));
     //model = glm::rotate(model, -this->arrowAngle, glm::vec3(0.0, 0.0, 1.0));
@@ -59,8 +67,11 @@ void Node::buildNode() {
     std::cout << "parent coord (" << parentCoord.x << "," << parentCoord.y << ")" << std::endl;
     glm::vec2 inmiddle; 
     float verticesArrow[20*3]; 
+    glm::vec2 p1 = glm::vec2(parentCoord.x * 0.8, parentCoord.y * 0.25);
+    glm::vec2 p2 = glm::vec2(parentCoord.x * 1.0, - parentCoord.y * 0.25);
     for (size_t t = 0; t < 20; t++){
-        inmiddle = Node::bernsteinPoly(t*0.05, glm::vec2(0.0f, 0.0f), glm::vec2(0.7 * parentCoord.x, parentCoord.y * 0.5f), parentCoord );  
+        //inmiddle = Node::bernsteinPoly(t*0.05, glm::vec2(0.0f, 0.0f), glm::vec2(0.7 * parentCoord.x, parentCoord.y * 0.5f), parentCoord );  
+        inmiddle = Node::bernsteinPolyQuadraticCurve(t*0.05, glm::vec2(0.0f, 0.0f), p1, p2, parentCoord);
         verticesArrow[t*3] = inmiddle.x;
         verticesArrow[t*3 + 1] = inmiddle.y;
         verticesArrow[t*3 + 2] = 0.0f;
@@ -87,8 +98,9 @@ void Node::buildNode() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); 
     glEnableVertexAttribArray(0); 
 
-    //glBindBuffer(GL_ARRAY_BUFFER, 0);
-    //glBindVertexArray(0);
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glDeleteBuffers(1, &VBOA);
 
     // ------- BUILDING NAME OF THE NODE ----------
     //glEnable(GL_TEXTURE_2D);
@@ -216,13 +228,14 @@ void Node::buildNode() {
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0); 
 
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glDeleteBuffers(1, &VBOT);
 }
-void Node::drawNode(Shader* shader, Node* root,  int maxLevel, int levelSeparation){
+void Node::drawNode(Shader* shader, Node* root, float* canvas){
     shader->use();
     glm::mat4 model = glm::mat4(1.0f); 
     //width = 20.0f;
@@ -233,9 +246,8 @@ void Node::drawNode(Shader* shader, Node* root,  int maxLevel, int levelSeparati
     int modelLoc = glGetUniformLocation(shader->ID, "model");
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     glm::mat4 projection = glm::mat4(1.0f);
-    float yAxisProjection = root->y * 3/2;  
     //std::cout << "yAxis : +/-" << yAxisProjection << " , level sep = "<< levelSeparation << ", maxlevel = " << maxLevel << std::endl; 
-    projection = glm::ortho(-400.0f, 400.0f, yAxisProjection - (maxLevel + 1) * (levelSeparation + 20.0f), yAxisProjection , 0.0f, 10.0f); 
+    projection = glm::ortho(canvas[0], canvas[1], canvas[2], canvas[3], 0.0f, 10.0f); 
     int projectionLoc = glGetUniformLocation(shader->ID, "projection");
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
