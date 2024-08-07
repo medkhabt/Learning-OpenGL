@@ -13,5 +13,9 @@ After a small search, i came a cross Walker algorithm for general tree drawing.
 [Walker, J. Q. (1990). A node‐positioning algorithm for general trees. Software, Practice & Experience/Software, Practice and Experience, 20(7), 685–705. https://doi.org/10.1002/spe.4380200705](https://www.cs.unc.edu/techreports/89-034.pdf)
 
 ## Progress:
-![progress](.resources/progress.png)
+Quadratic Bezier curves and also now you can zoom in and out also navigate with the arrow keys, with a smooth step function for the movement. 
+
+![first layout](.resources/progress_mv1.png)
+![moving](.resources/progress_mv2.png)
+![zooming](.resources/progress_mv3.png)
 
