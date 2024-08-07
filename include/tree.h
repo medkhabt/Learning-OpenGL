@@ -14,6 +14,13 @@ enum ZOOM{
     IN, 
     OUT 
 };
+enum MOVE {
+    STATIONARY = 0, 
+    UP, 
+    RIGHT,
+    DOWN,
+    LEFT
+};
 class Tree {
     public : 
         Shader* shader; 
@@ -29,9 +36,10 @@ class Tree {
         float canvas[4]; 
         int zoomCoeff; 
         int zoomCoeffBefore;
+        glm::vec4 moveCoeff; 
         std::vector<Node*> prevNode; 
         float* pRootY; 
-        float t; 
+        glm::vec3 t; 
 
         std::vector<int> levels; 
 
@@ -41,9 +49,13 @@ class Tree {
             this->pRootY = &root->y;
             this->vaoRectangleId = buildRectangle(root->width);  
             this->vaoArrowId = buildArrow();
-            this->t = 1.0f; 
+            this->t = glm::vec3(1.0f, 1.0f, 1.0f); 
             this->zoomCoeff = 0; 
             this->zoomCoeffBefore= 0; 
+            this->moveCoeff.x = 0;
+            this->moveCoeff.y = 0;
+            this->moveCoeff.z = 0;
+            this->moveCoeff.w = 0;
         }
         // TODO implememnt this
         unsigned int getMaxVertexesInLevel(){
@@ -238,47 +250,83 @@ class Tree {
 
         // ******************* END WALKER ALGO ***********************************
 
-        void drawTree(ZOOM zoom) {
+        void drawTree(ZOOM zoom, MOVE move) {
             std::queue<Node*> visited;  
             Node* currNode = this->root;
             Node* sibling;
             visited.push(currNode);
             this->shader->use(); 
-            int zoomLoc, zoomTextLoc, treeAnimationLoc;
+            int zoomLoc, zoomTextLoc, treeAnimationLoc, moveLoc, moveTextLoc;
             glm::mat4 zoomVal = glm::mat4(1.0f); 
             glm::mat4 treeAnimationVal = glm::mat4(1.0f);
+            glm::mat4 moveVal = glm::mat4(1.0f); 
 
             zoomLoc = glGetUniformLocation(this->shader->ID, "zoom");
             zoomTextLoc = glGetUniformLocation(this->root->font->shader->ID, "zoom");
             treeAnimationLoc = glGetUniformLocation(this->shader->ID, "treeAnimation");
+            moveLoc = glGetUniformLocation(this->shader->ID, "mov");
+            moveTextLoc = glGetUniformLocation(this->root->font->shader->ID, "mov");
 
-            if( t < 1.0f ){
-                t += 0.05f; 
+            // Problem we occur when trying an other action before one finishes ?
+            if( this->t.x < 1.0f ){
+                t.x += 0.05f; 
             }
+            if( this->t.y < 1.0f ){
+                t.x += 0.05f; 
+            }
+            if( this->t.z < 1.0f ){
+                t.z += 0.05f; 
+            }
+
             if(zoom == IN && this->zoomCoeff < 5) {
                 this->zoomCoeffBefore = this->zoomCoeff++;
-                t = 0.0f; 
+                t.x = 0.0f; 
             }else if(zoom == OUT && this->zoomCoeff > -3) {
                 this->zoomCoeffBefore = this->zoomCoeff--; 
-                t = 0.0f;
+                t.x = 0.0f;
             }
-            //float zoomVal = pow(0.9, this->zoomCoeff); 
-            //float zoomT = (1.0f - t ) * (1.0f + 0.1 * this->zoomCoeffBefore ) + t * ( 1.0f + 0.1 * this->zoomCoeff); 
-            float zoomT = (3*t*t - 2*t*t*t )* (1.0f + 0.3 * this->zoomCoeff) + (1.0f - (3*t*t - 2*t*t*t) ) *(1.0f + 0.3 * this->zoomCoeffBefore) ; 
-            float animTree = (3*t*t - 2*t*t*t);
-            if(t < 1.0f) {
-                std::cout << "t is " << t  << " , zoom is : " << zoomT << ", zoomCoeff :"<< this->zoomCoeff << ", zoomBeforeCoef: " << this->zoomCoeffBefore <<std::endl;
+            if(move == RIGHT){
+                this->moveCoeff.z = this->moveCoeff.x++;  
+                this->moveCoeff.w = this->moveCoeff.y;  
+                t.z = 0.0f;
+                //std::cout << "the movecoeff changed to " << this->moveCoeff.x << ", " << this->moveCoeff.y << std::endl;
+            } else if(move == LEFT){
+                this->moveCoeff.z = this->moveCoeff.x--;  
+                this->moveCoeff.w = this->moveCoeff.y;  
+                t.z = 0.0f;
+                //std::cout << "the movecoeff changed to " << this->moveCoeff.x << ", " << this->moveCoeff.y << std::endl;
+            } else if(move == UP){
+                this->moveCoeff.w = this->moveCoeff.y++;  
+                this->moveCoeff.z = this->moveCoeff.x;  
+                t.z = 0.0f;
+                //std::cout << "the movecoeff changed to " << this->moveCoeff.x << ", " << this->moveCoeff.y << std::endl;
+            } else if(move == DOWN){
+                this->moveCoeff.w = this->moveCoeff.y--;  
+                this->moveCoeff.z = this->moveCoeff.x;  
+                t.z = 0.0f;
+                //std::cout << "the movecoeff changed to " << this->moveCoeff.x << ", " << this->moveCoeff.y << std::endl;
             }
+            float zoomT = (3*t.x * t.x - 2 * t.x * t.x * t.x ) * (1.0f + 0.3 * this->zoomCoeff) + (1.0f - (3 * t.x * t.x - 2 * t.x * t.x * t.x) ) *(1.0f + 0.3 * this->zoomCoeffBefore); 
+            float animTree =  3 * t.x * t.x - 2 * t.x * t.x * t.x; 
+            glm::vec2 moveT = (3 * t.z * t.z - 2 * t.z * t.z * t.z) * glm::vec2(this->moveCoeff.x, this->moveCoeff.y) * 80.0f + (1.0f - (3 * t.z * t.z - 2 * t.z * t.z * t.z) ) * glm::vec2(this->moveCoeff.z, this->moveCoeff.w) * 80.0f; 
+            //if(t.z < 1.0f) {
+            //std::cout << "t is " << t  << " , zoom is : " << zoomT << ", zoomCoeff :"<< this->zoomCoeff << ", zoomBeforeCoef: " << this->zoomCoeffBefore <<std::endl;
+            //std::cout << "t.z is " << t.z  << " , movT is : " << this->moveCoeff.x << ", "<< this->moveCoeff.y << ", and z,w = : " << this->moveCoeff.z << "," << this->moveCoeff.w <<std::endl;
+            //}
             //std::cout << "first part : " << (1.0f - t) * pow(0.9, this->zoomCoeff - 1) << " , second part : " << t * pow(0.9, this->zoomCoeff)<< std::endl;
             zoomVal[0].x =  zoomT; 
             zoomVal[1].y = zoomT; 
             treeAnimationVal[0].x = animTree; 
             treeAnimationVal[1].y = animTree; 
+            moveVal[3].x = moveT.x; 
+            moveVal[3].y = moveT.y;
             glUniformMatrix4fv(zoomLoc, 1, GL_FALSE, glm::value_ptr(zoomVal));
             glUniformMatrix4fv(treeAnimationLoc, 1, GL_FALSE, glm::value_ptr(treeAnimationVal));
+            glUniformMatrix4fv(moveLoc, 1, GL_FALSE, glm::value_ptr(moveVal));
             // ! this could be pain in the ass to debug, as i wouldn't expect that the tree work on the text in a different shader that the other objects
             this->root->font->shader->use();
             glUniformMatrix4fv(zoomTextLoc, 1, GL_FALSE, glm::value_ptr(zoomVal));
+            glUniformMatrix4fv(moveTextLoc, 1, GL_FALSE, glm::value_ptr(moveVal));
             this->shader->use(); 
             while(!visited.empty()){
                 currNode = visited.front(); 
@@ -296,38 +344,6 @@ class Tree {
                 }
             }
         }
-        /*        void drawNode(Node* node){
-                  glm::mat4 model = glm::mat4(1.0f); 
-        //width = 20.0f;
-        int xFinal = node->x - node->width / 2;
-        int yFinal = node->y + node->width / 2;
-        model = glm::translate(model, glm::vec3(xFinal, yFinal, 0.0f));
-        //model = glm::scale(model, glm::vec3(x/20.0f, x/20.0f, 1.0f));
-        int modelLoc = glGetUniformLocation(shader->ID, "model");
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-        glm::mat4 projection = glm::mat4(1.0f);
-        float yAxisProjection = (float(this->maxLevel * this->levelSeparation * 3)/4); 
-        projection = glm::ortho(-400.0f, 400.0f, -yAxisProjection, yAxisProjection , 0.0f, 10.0f); 
-        int projectionLoc = glGetUniformLocation(shader->ID, "projection");
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glBindVertexArray(this->vaoRectangleId);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-        glBindVertexArray(this->vaoArrowId); 
-        if(node->parent != NULL){
-
-        model = glm::mat4(1.0f); 
-        model = glm::translate(model, glm::vec3(node->x - node->width / 2 , node->y + node->width, 0.0f));
-        model = glm::rotate(model, -node->arrowAngle, glm::vec3(0.0, 0.0, 1.0));
-        model = glm::scale(model, glm::vec3(node->arrowAmp/10.0f, 1.0f, 1.0f));
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-        glDrawArrays(GL_LINES, 0, 2);
-        }
-        }
-        */
         unsigned int buildRectangle(float width) {
             // Addind the spacing in the calculation ( half of the node width )
             width = width/2;

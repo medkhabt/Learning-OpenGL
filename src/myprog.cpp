@@ -17,10 +17,11 @@
 
 unsigned int VAO, VBO; 
 ZOOM zoom; 
+MOVE move; 
 
 void processInput(GLFWwindow *window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height); 
-void zoom_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void position_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 unsigned int buildRectangle(); 
 volatile std::sig_atomic_t stop;
 void handle_signal(int signal) {
@@ -50,7 +51,7 @@ int main() {
 
     glViewport(0, 0, 800, 600);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetKeyCallback(window, zoom_callback); 
+    glfwSetKeyCallback(window, position_callback); 
 
     int nAttributes; 
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nAttributes);
@@ -126,7 +127,7 @@ int main() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     int widthWindow, heightWindow;
-    int resolutionLoc, timeValueLoc, rootLoc ; 
+    int resolutionLoc, timeValueLoc, rootLoc; 
     // RENDER
     while(!glfwWindowShouldClose(window)){
         glfwGetWindowSize(window, &widthWindow, &heightWindow);
@@ -151,15 +152,20 @@ int main() {
         glBindVertexArray(VAOT);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-        t->drawTree(zoom);
+        t->drawTree(zoom, move);
         if(zoom!= NO){
             std::cout << "zoom is different" <<std::endl;
             zoom = NO;
-        } //font->renderText("C1415", 60.0f - 10.0f, -100.0f + 10.0f, 0.2f, glm::vec3(0.5f, 0.8f, 0.2f));
-          //font->renderText("C11", -210.0f - 10.0f, 20.0f + 10.0f, 0.2f, glm::vec3(0.5f, 0.8f, 0.2f));
-          //font->renderText("A2", -150.0f - 10.0f , 80.0f + 10.0f , 0.2f, glm::vec3(0.5f, 0.8f, 0.2f));
-          //font->renderText("A", -180.0f- 10.0f, 140.0f + 10.0f, 0.2f, glm::vec3(0.5f, 0.8f, 0.2f));
-          //font->renderText("(C) Medkha.com", 540.0f, 570.0f, 0.5f, glm::vec3(0.3f, 0.7f, 0.9f));
+        } 
+        if(move != (MOVE)STATIONARY){
+            std::cout << "move is different" << std::endl; 
+            move = (MOVE)STATIONARY;  
+        }
+        //font->renderText("C1415", 60.0f - 10.0f, -100.0f + 10.0f, 0.2f, glm::vec3(0.5f, 0.8f, 0.2f));
+        //font->renderText("C11", -210.0f - 10.0f, 20.0f + 10.0f, 0.2f, glm::vec3(0.5f, 0.8f, 0.2f));
+        //font->renderText("A2", -150.0f - 10.0f , 80.0f + 10.0f , 0.2f, glm::vec3(0.5f, 0.8f, 0.2f));
+        //font->renderText("A", -180.0f- 10.0f, 140.0f + 10.0f, 0.2f, glm::vec3(0.5f, 0.8f, 0.2f));
+        //font->renderText("(C) Medkha.com", 540.0f, 570.0f, 0.5f, glm::vec3(0.3f, 0.7f, 0.9f));
 
         glfwSwapBuffers(window);  
         glfwPollEvents();
@@ -252,13 +258,27 @@ unsigned int buildRectangle() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     return VAO;
 }
-void zoom_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
+void position_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
     if(zoom!= IN && glfwGetKey(window, GLFW_KEY_EQUAL)){
         zoom = (ZOOM)IN; 
         std::cout << "zoom in" <<std::endl;
     }else if(zoom != OUT && glfwGetKey(window, GLFW_KEY_MINUS)){
         zoom = (ZOOM)OUT;  
         std::cout << "zoom out" <<std::endl;
+    }else if(move != RIGHT && glfwGetKey(window, GLFW_KEY_RIGHT)){
+        move = (MOVE)LEFT; 
+        std::cout << "move right" << std::endl;
+    }else if(move != LEFT && glfwGetKey(window, GLFW_KEY_LEFT)){
+        move = (MOVE)RIGHT; 
+        std::cout << "move left" << std::endl;
+    }else if(move != UP && glfwGetKey(window, GLFW_KEY_UP)){
+        move = (MOVE)DOWN; 
+        std::cout << "move up" << std::endl;
+    }else if(move != DOWN && glfwGetKey(window, GLFW_KEY_DOWN)){
+        move = (MOVE)UP; 
+        std::cout << "move down" << std::endl;
     }
+
+
 
 }
