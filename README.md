@@ -19,3 +19,7 @@ Quadratic Bezier curves and also now you can zoom in and out also navigate with 
 ![moving](.resources/progress_mv2.png)
 ![zooming](.resources/progress_mv3.png)
 
+### Parsing the tree from a text file 
+![first_version](.resources/parser_output.png)
+![first_version](.resources/parser_output_zoomedout.png)
+
