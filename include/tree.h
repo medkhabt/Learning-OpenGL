@@ -112,10 +112,15 @@ class Tree {
                 ancestorLeftMost = leftMost; 
                 ancestorNeighbor = neighbor; 
                 for (size_t i = 0; i < compareDepth; i++){
-                    ancestorLeftMost = ancestorLeftMost->parent;  
-                    ancestorNeighbor = ancestorNeighbor->parent;
-                    rightModSum += ancestorLeftMost->modifier; 
-                    leftModSum += ancestorNeighbor->modifier; 
+                    //TODO remove this if doesn't work 
+                    //if(ancestorLeftMost->parent != NULL){
+                        ancestorLeftMost = ancestorLeftMost->parent;  
+                        rightModSum += ancestorLeftMost->modifier; 
+                    //}
+                    //if(ancestorNeighbor->parent != NULL){
+                        ancestorNeighbor = ancestorNeighbor->parent;
+                        leftModSum += ancestorNeighbor->modifier; 
+                    //}
                 }
                 float moveDistance = (neighbor->prelimX + 
                         leftModSum +

@@ -2,6 +2,17 @@
 #include <map>
 #include <font.h>
 
+Node::~Node(){
+    Node *next; 
+    if(this->hasChild()) {
+        next = this->firstChild;  
+        while(next->hasRightSibling()) {
+            next = next->rightSibling;  
+            delete next->leftSibling; 
+        }
+        delete next; 
+    }
+}
 glm::vec2 Node::bernsteinPoly(float t, glm::vec2 p0, glm::vec2 p1, glm::vec2 p2){
     return (- t * t - t) * p0 + (-2 * t*t + 2*t) * p1 + t * t * p2; 
 }

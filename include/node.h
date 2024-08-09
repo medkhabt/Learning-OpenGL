@@ -49,6 +49,7 @@ class Node {
                 }
             }
         }
+        ~Node();
         glm::vec2 bernsteinPoly(float t, glm::vec2 p0, glm::vec2 p1, glm::vec2 p2);
         glm::vec2 bernsteinPolyQuadraticCurve(float t, glm::vec2 p0, glm::vec2 p1, glm::vec2 p2, glm::vec2 p3);
         //TODO specify the width on the constructor.

@@ -29,7 +29,7 @@ profile : $(C_OBJS)
 	clang++ $(CPPFLAGS) $(CPPDEBUG) $(INC) -o myprog $(C_OBJS) $(CPP_SRC) $(LIBS) 
 
 build : $(C_OBJS)
-	clang++ $(CPPFLAGS) -O3 $(INC) -o myprog $(C_OBJS) $(CPP_SRC) $(LIBS)
+	clang++ $(CPPFLAGS) -O3 $(INC) -o myprog $(C_OBJS) $(CPP_SRC) $(LIBS) 2>&1 | less
 
 build_test: $(C_OBJS)
 	clang++ $(CPPFLAGS) $(INC) -o mytest $(C_OBJS) $(CPP_TST) $(SRC) 

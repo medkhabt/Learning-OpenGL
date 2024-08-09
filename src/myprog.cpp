@@ -14,6 +14,7 @@
 #include <node.h>
 #include <tree.h>
 #include <font.h>
+#include <file.h>
 
 unsigned int VAO, VBO; 
 ZOOM zoom; 
@@ -32,6 +33,8 @@ void handle_signal(int signal) {
 }
 int main() {
     std::signal(SIGINT, handle_signal);
+    FileManager fileManager; 
+    //fileManager.readFile("test.txt");
     glfwInit(); 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); 
@@ -57,9 +60,10 @@ int main() {
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nAttributes);
     std::cout << "Maximum nr of vertex attributes supported: " << nAttributes << std::endl;
 
+
     Shader fontShader("./src/shaders/textShader.vs", "./src/shaders/textShader.fs");
     Font* font = new Font(&fontShader); 
-
+    Node* nodeFromFile = fileManager.generateTree("test.txt", font);
 
     Node* s = new Node(NULL, "S", 0, 200, font); 
     Node* a = new Node(s, "A", 0, 0, font); 
@@ -90,7 +94,9 @@ int main() {
 
     std::cout << "TEST file:: Creating tree" << std::endl;
     Shader treeShader("./src/shaders/treeShader.vs", "./src/shaders/treeShader.fs");
-    Tree* t =  new Tree(&treeShader, s, 40, 60, 60);
+    //Tree* t =  new Tree(&treeShader, s, 40, 60, 60);
+    Tree* t =  new Tree(&treeShader, nodeFromFile, 40, 60, 60);
+//nodeFromFile
     t->positionTree();
     std::cout << "TEST file:: positionTree execution"<< std::endl;
 
