@@ -6,6 +6,8 @@ And I need to that for better text drawing.
 
 ### Scaling 
 the dimension calculations are fixed to the dimension of the window, and do not change when zooming in or out. 
+update: That's not the problem actually, the problem is trying to fit the entire tree on the screen with the window dimentions. 
+I should specify a min width and heigth for a node. If the user want to fit the entire tree on the screen, he can zoom out.  
 
 ### Too many recursions ? 
 I get a segfault if i have a big recurion depth. I need to investigate more what's the problem. 
