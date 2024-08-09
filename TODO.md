@@ -1,6 +1,15 @@
 # TODOS
 ## Issues
-### Planar drawing
+### ADJUST TEXT FORMATTING
+after chaning the drawing of the text from per character draw to a name node draw (string). I didn't care about the adjustement of the glyphs. 
+And I need to that for better text drawing. 
+
+### Scaling 
+the dimension calculations are fixed to the dimension of the window, and do not change when zooming in or out. 
+
+### Too many recursions ? 
+I get a segfault if i have a big recurion depth. I need to investigate more what's the problem. 
+### Planar drawing (FIXED)
 the drawing isn't planar for this tree 
 ```cpp
 Node* s = new Node(NULL, "S", 0, 200); 
